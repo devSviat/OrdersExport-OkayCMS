@@ -53,9 +53,7 @@ class BackendExtender implements ExtensionInterface
             return $filter;
         }
 
-        /** @var ProductsEntity $productsEntity */
         $productsEntity = $this->entityFactory->get(ProductsEntity::class);
-        /** @var PurchasesEntity $purchasesEntity */
         $purchasesEntity = $this->entityFactory->get(PurchasesEntity::class);
 
         $productIds = $productsEntity->noLimit()->cols(['id'])->find(['brand_id' => $brandIds]);
@@ -98,10 +96,7 @@ class BackendExtender implements ExtensionInterface
         return $filter;
     }
 
-    /**
-     * @param mixed $rawBrandIds
-     * @return array<int>
-     */
+    /** Повертає коректний список ID брендів. */
     private function normalizeBrandIds($rawBrandIds): array
     {
         if (is_string($rawBrandIds)) {

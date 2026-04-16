@@ -7,17 +7,10 @@ use Okay\Core\Modules\AbstractModuleEntityFilter;
 use Okay\Entities\OrdersEntity as OriginalOrdersEntity;
 use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
 
-/**
- * Розширення OrdersEntity для додаткових фільтрів експорту
- */
+/** Додаткові фільтри для експорту замовлень. */
 class OrdersEntityExtend extends AbstractModuleEntityFilter
 {
-    /**
-     * Фільтрує замовлення, які мають ТТН
-     * 
-     * @param mixed $value Значення фільтра (true, 1 або '1')
-     * @param array $filter Масив фільтрів
-     */
+    /** Фільтр замовлень, у яких є ТТН. */
     public function filter__has_ttn($value, $filter)
     {
         if ($value !== true && $value !== 1 && $value !== '1') {
@@ -33,12 +26,7 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
         $this->select->groupBy([$tableAlias . '.id']);
     }
 
-    /**
-     * Фільтрує замовлення за брендами товарів у покупках
-     *
-     * @param array<int, mixed>|mixed $brandIds
-     * @param array $filter
-     */
+    /** Фільтр замовлень за брендами товарів. */
     public function filter__brand_ids($brandIds, $filter)
     {
         if (is_string($brandIds)) {

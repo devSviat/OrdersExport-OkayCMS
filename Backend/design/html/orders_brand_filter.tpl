@@ -68,7 +68,6 @@
                     <div class="modal-footer">
                         <button type="submit" class="btn btn_small btn_blue">{$btr->sviat__orders_export__apply|escape}</button>
                         <button type="button" class="btn btn_small btn-blue-outline" id="fn_orders_brand_filter_reset">{$btr->sviat__orders_export__reset|escape}</button>
-                        {* <button type="button" class="btn btn_small" data-dismiss="modal">{$btr->sviat__orders_export__cancel|escape}</button> *}
                     </div>
                 </form>
             </div>

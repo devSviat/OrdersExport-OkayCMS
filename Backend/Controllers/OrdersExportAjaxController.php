@@ -7,18 +7,10 @@ use Okay\Core\Managers;
 use Okay\Entities\ManagersEntity;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 
-/**
- * AJAX контролер для експорту замовлень
- */
+/** AJAX-контролер експорту замовлень. */
 class OrdersExportAjaxController extends AbstractController
 {
-    /**
-     * Виконує експорт замовлень у CSV формат
-     * 
-     * @param Managers $managers
-     * @param ManagersEntity $managersEntity
-     * @param BackendOrdersExportHelper $backendOrdersExportHelper
-     */
+    /** Запускає експорт замовлень у CSV. */
     public function exportOrders(
         Managers $managers,
         ManagersEntity $managersEntity,

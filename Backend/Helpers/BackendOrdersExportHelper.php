@@ -15,9 +15,7 @@ use Okay\Entities\PurchasesEntity;
 use Okay\Entities\ProductsEntity;
 use Okay\Entities\BrandsEntity;
 
-/**
- * Helper для експорту замовлень у CSV формат
- */
+/** Допоміжна логіка експорту замовлень у CSV. */
 class BackendOrdersExportHelper
 {
     private OrdersEntity $ordersEntity;
@@ -30,12 +28,6 @@ class BackendOrdersExportHelper
     private EntityFactory $entityFactory;
     private Modules $modules;
 
-    /**
-     * @param EntityFactory $entityFactory
-     * @param Request $request
-     * @param Settings $settings
-     * @param Modules $modules
-     */
     public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules)
     {
         $this->ordersEntity = $entityFactory->get(OrdersEntity::class);
@@ -49,11 +41,7 @@ class BackendOrdersExportHelper
         $this->modules = $modules;
     }
 
-    /**
-     * Отримує список назв колонок для експорту
-     * 
-     * @return array<string, string> Масив з ключами колонок та їх назвами
-     */
+    /** Повертає назви колонок для експорту. */
     public function getColumnsNames()
     {
         $columnsNames = [
@@ -96,11 +84,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $columnsNames, func_get_args());
     }
 
-    /**
-     * Отримує параметри конфігурації експорту
-     * 
-     * @return object Об'єкт з параметрами: column_delimiter, orders_count, export_files_dir, filename
-     */
+    /** Повертає параметри експорту. */
     public function getConfigParams()
     {
         $columnDelimiter = (string) $this->settings->get('sviat__orders_export__column_delimiter');
@@ -123,16 +107,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $params, func_get_args());
     }
 
-    /**
-     * Налаштовує параметри експорту та формує фільтри
-     * 
-     * @param string $exportFilesDir Директорія для збереження файлу експорту
-     * @param string $filename Ім'я файлу експорту
-     * @param array &$columnsNames Масив назв колонок (модифікується)
-     * @param string $columnDelimiter Роздільник колонок
-     * @param int $ordersCount Кількість замовлень на сторінку
-     * @return array{0: array, 1: int} Масив з фільтрами та номером сторінки
-     */
+    /** Готує експорт і збирає фільтри. */
     public function setUp($exportFilesDir, $filename, &$columnsNames, $columnDelimiter, $ordersCount)
     {
         session_write_close();
@@ -189,12 +164,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, [$filter, $page], func_get_args());
     }
 
-    /**
-     * Отримує замовлення згідно з фільтрами
-     * 
-     * @param array $filter Масив фільтрів для пошуку замовлень
-     * @return array<int, object> Масив замовлень, індексований по ID
-     */
+    /** Завантажує замовлення за фільтром. */
     public function fetchOrders($filter)
     {
         $orders = $this->ordersEntity->mappedBy('id')->find($filter);
@@ -215,19 +185,14 @@ class BackendOrdersExportHelper
                     }
                 }
             } catch (\Throwable $e) {
-                // Модуль OrderCancellationReason не доступний
+                // Ігноруємо, якщо модуль недоступний.
             }
         }
 
         return ExtenderFacade::execute(__METHOD__, $orders, func_get_args());
     }
 
-    /**
-     * Прикріплює покупки до замовлень
-     * 
-     * @param array<int, object> $orders Масив замовлень
-     * @return array<int, array<object>> Масив покупок, згрупованих по order_id
-     */
+    /** Групує покупки за замовленнями. */
     public function attachPurchases($orders)
     {
         $ordersIds = [];
@@ -276,12 +241,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $purchases, func_get_args());
     }
 
-    /**
-     * Прикріплює статуси до замовлень
-     * 
-     * @param array<int, object> $orders Масив замовлень
-     * @return array<int, object> Масив статусів, індексований по ID
-     */
+    /** Повертає статуси для замовлень. */
     public function attachStatuses($orders)
     {
         $statusesIds = [];
@@ -302,12 +262,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $statuses, func_get_args());
     }
 
-    /**
-     * Прикріплює номери ТТН до замовлень
-     * 
-     * @param array<int, object> $orders Масив замовлень
-     * @return array<int, string> Масив номерів ТТН, індексований по order_id
-     */
+    /** Повертає ТТН для замовлень. */
     public function attachTtn($orders)
     {
         $ttnData = [];
@@ -332,19 +287,14 @@ class BackendOrdersExportHelper
                     }
                 }
             } catch (\Exception $e) {
-                // Модуль не встановлений або entity недоступний
+                // Ігноруємо, якщо модуль або entity недоступні.
             }
         }
 
         return ExtenderFacade::execute(__METHOD__, $ttnData, func_get_args());
     }
 
-    /**
-     * Прикріплює назви брендів до покупок
-     * 
-     * @param array<int, array<object>> $purchases Масив покупок, згрупованих по order_id
-     * @return array<int, string> Масив назв брендів, індексований по product_id
-     */
+    /** Повертає назви брендів для товарів у покупках. */
     public function attachBrands($purchases)
     {
         $brandsData = [];
@@ -389,21 +339,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $brandsData, func_get_args());
     }
 
-    /**
-     * Виконує експорт замовлень у CSV файл
-     * 
-     * @param string $exportFilesDir Директорія для збереження файлу
-     * @param string $filename Ім'я файлу
-     * @param array<int, object> $orders Масив замовлень
-     * @param array<int, array<object>> $purchases Масив покупок
-     * @param array<int, object> $statuses Масив статусів
-     * @param array $filter Масив фільтрів
-     * @param array<string, string> $columnsNames Масив назв колонок
-     * @param string $columnDelimiter Роздільник колонок
-     * @param int $ordersCount Кількість замовлень на сторінку
-     * @param int $page Номер поточної сторінки
-     * @return array<string, mixed>|null Масив з інформацією про завершення експорту або null
-     */
+    /** Записує поточну порцію замовлень у CSV. */
     public function exportRun($exportFilesDir, $filename, $orders, $purchases, $statuses, $filter, $columnsNames, $columnDelimiter, $ordersCount, $page)
     {
         $f = fopen($exportFilesDir . $filename, 'ab');
@@ -549,10 +485,7 @@ class BackendOrdersExportHelper
         return $data;
     }
 
-    /**
-     * @param mixed $rawBrandIds
-     * @return array<int>
-     */
+    /** Повертає коректний список ID брендів. */
     private function normalizeBrandIds($rawBrandIds): array
     {
         if (!is_array($rawBrandIds)) {

@@ -14,7 +14,7 @@
     </div>
 </div>
 
-{*Вывод ошибок*}
+{* Блок помилок *}
 {if $message_error}
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12">
@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    {*Параметры элемента*}
+    {* Параметри експорту *}
     <div class="boxed fn_toggle_wrap">
         <div class="row">
             <div class="col-lg-12 col-md-12 ">

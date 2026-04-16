@@ -8,16 +8,12 @@ use Okay\Core\Modules\Modules;
 use Okay\Entities\BrandsEntity;
 use Okay\Entities\OrderStatusEntity;
 
-/**
- * Контролер адмін-панелі для сторінки експорту замовлень
- */
+/** Сторінка запуску експорту замовлень. */
 class OrdersExportRunAdmin extends IndexAdmin
 {
     private string $exportFilesDir = 'backend/files/export/';
 
-    /**
-     * Відображає сторінку запуску експорту замовлень
-     */
+    /** Показує сторінку запуску експорту. */
     public function fetch(
         OrderStatusEntity $orderStatusEntity,
         BrandsEntity $brandsEntity,

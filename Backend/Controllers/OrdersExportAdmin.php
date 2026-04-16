@@ -5,14 +5,10 @@ namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Admin\Controllers\IndexAdmin;
 
-/**
- * Контролер адмін-панелі для налаштувань експорту замовлень
- */
+/** Сторінка налаштувань експорту замовлень. */
 class OrdersExportAdmin extends IndexAdmin
 {
-    /**
-     * Відображає сторінку налаштувань експорту замовлень
-     */
+    /** Показує сторінку налаштувань. */
     public function fetch() {
         if ($this->request->method('post')) {
             $ordersCount = $this->request->post('orders_count', 'integer', 100);
