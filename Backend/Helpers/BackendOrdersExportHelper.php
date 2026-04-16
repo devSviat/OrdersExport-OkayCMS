@@ -7,6 +7,8 @@ use Okay\Core\EntityFactory;
 use Okay\Core\Modules\Extender\ExtenderFacade;
 use Okay\Core\Modules\Modules;
 use Okay\Core\Request;
+use Okay\Core\Settings;
+use Okay\Core\ServiceLocator;
 use Okay\Entities\OrdersEntity;
 use Okay\Entities\OrderStatusEntity;
 use Okay\Entities\PurchasesEntity;
@@ -24,15 +26,17 @@ class BackendOrdersExportHelper
     private ProductsEntity $productsEntity;
     private BrandsEntity $brandsEntity;
     private Request $request;
+    private Settings $settings;
     private EntityFactory $entityFactory;
     private Modules $modules;
 
     /**
      * @param EntityFactory $entityFactory
      * @param Request $request
+     * @param Settings $settings
      * @param Modules $modules
      */
-    public function __construct(EntityFactory $entityFactory, Request $request, Modules $modules)
+    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules)
     {
         $this->ordersEntity = $entityFactory->get(OrdersEntity::class);
         $this->purchasesEntity = $entityFactory->get(PurchasesEntity::class);
@@ -40,6 +44,7 @@ class BackendOrdersExportHelper
         $this->productsEntity = $entityFactory->get(ProductsEntity::class);
         $this->brandsEntity = $entityFactory->get(BrandsEntity::class);
         $this->request = $request;
+        $this->settings = $settings;
         $this->entityFactory = $entityFactory;
         $this->modules = $modules;
     }
@@ -53,7 +58,7 @@ class BackendOrdersExportHelper
     {
         $columnsNames = [
             'order_id' => 'Номер замовлення',
-            'multiple_items' => 'Позицій',
+            'multiple_items' => 'Кілька позицій',
             'status' => 'Статус',
             'brand' => 'Бренд',
             'sku' => 'SKU товару',
@@ -62,6 +67,17 @@ class BackendOrdersExportHelper
             'price' => 'Ціна',
             'date' => 'Дата замовлення',
         ];
+
+        if ($this->modules->isActiveModule('Sviat', 'OrderCancellationReason')) {
+            $columnsNamesWithCancellation = [];
+            foreach ($columnsNames as $key => $value) {
+                $columnsNamesWithCancellation[$key] = $value;
+                if ($key === 'status') {
+                    $columnsNamesWithCancellation['cancellation_reason'] = 'Причина скасування';
+                }
+            }
+            $columnsNames = $columnsNamesWithCancellation;
+        }
 
         $exportTtn = $this->request->get('export_ttn');
         if (($exportTtn == '1' || $exportTtn == '2' || $exportTtn === 1 || $exportTtn === 2)
@@ -87,9 +103,19 @@ class BackendOrdersExportHelper
      */
     public function getConfigParams()
     {
+        $columnDelimiter = (string) $this->settings->get('sviat__orders_export__column_delimiter');
+        if (!in_array($columnDelimiter, [';', ',', "\t"], true)) {
+            $columnDelimiter = ';';
+        }
+
+        $ordersCount = (int) $this->settings->get('sviat__orders_export__orders_count');
+        if ($ordersCount <= 0) {
+            $ordersCount = 100;
+        }
+
         $params = (object) [
-            'column_delimiter' => ';',
-            'orders_count' => 100,
+            'column_delimiter' => $columnDelimiter,
+            'orders_count' => $ordersCount,
             'export_files_dir' => 'backend/files/export/',
             'filename' => 'export_orders_enhanced.csv',
         ];
@@ -152,6 +178,9 @@ class BackendOrdersExportHelper
             $filter['has_ttn'] = true;
         }
 
+        $brandIds = $this->normalizeBrandIds($this->request->get('brand_ids'));
+        $filter = $this->appendBrandOrdersFilter($filter, $brandIds);
+
         if ($page == 1) {
             fputcsv($f, $columnsNames, $columnDelimiter);
         }
@@ -168,49 +197,28 @@ class BackendOrdersExportHelper
      */
     public function fetchOrders($filter)
     {
-        $exportTtn = $this->request->get('export_ttn');
-        $filterByTtn = ($exportTtn == '2' || $exportTtn === 2)
-            && $this->modules->isActiveModule('Sviat', 'NovaPoshtaTracking');
-
         $orders = $this->ordersEntity->mappedBy('id')->find($filter);
 
-        if ($filterByTtn) {
+        if ($this->modules->isActiveModule('Sviat', 'OrderCancellationReason')) {
             try {
-                $novaPoshtaTrackingEntity = $this->entityFactory->get('Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity');
-                $ordersIds = array_keys($orders);
-
-                if (!empty($ordersIds)) {
-                    $trackingData = $novaPoshtaTrackingEntity->find(['order_id' => $ordersIds]);
-                    $ordersWithTtn = [];
-                    foreach ($trackingData as $tracking) {
-                        if (!empty($tracking->int_doc_number) && !empty($tracking->order_id)) {
-                            $ordersWithTtn[$tracking->order_id] = true;
+                $ocrHelper = ServiceLocator::getInstance()->getService(
+                    \Okay\Modules\Sviat\OrderCancellationReason\Backend\Helpers\BackendOrderCancellationReasonHelper::class
+                );
+                $cancelledId = $ocrHelper->getCancelledStatusId();
+                if ($cancelledId !== null) {
+                    foreach ($orders as $order) {
+                        if ((int) $order->status_id === $cancelledId
+                            && (!empty($order->cancellation_reason_id) || trim((string) ($order->cancellation_reason_text ?? '')) !== '')
+                        ) {
+                            $order->cancellation_reason_display = $ocrHelper->getCancellationReasonDisplayText($order);
                         }
                     }
-
-                    $filteredOrders = [];
-                    foreach ($orders as $orderId => $order) {
-                        if (isset($ordersWithTtn[$orderId])) {
-                            $filteredOrders[$orderId] = $order;
-                        }
-                    }
-                    $orders = $filteredOrders;
-                } else {
-                    $orders = [];
                 }
-            } catch (\Exception $e) {
-                $orders = [];
+            } catch (\Throwable $e) {
+                // Модуль OrderCancellationReason не доступний
             }
         }
 
-        foreach ($orders as $order) {
-            if (empty($order->status_name) && !empty($order->status_id)) {
-                $status = $this->orderStatusEntity->get($order->status_id);
-                if ($status) {
-                    $order->status_name = $status->name;
-                }
-            }
-        }
         return ExtenderFacade::execute(__METHOD__, $orders, func_get_args());
     }
 
@@ -230,6 +238,36 @@ class BackendOrdersExportHelper
         $purchases = [];
         if (!empty($ordersIds)) {
             $purchasesData = $this->purchasesEntity->find(['order_id' => $ordersIds]);
+
+            $brandIds = $this->normalizeBrandIds($this->request->get('brand_ids'));
+            if (!empty($brandIds)) {
+                $productIds = [];
+                foreach ($purchasesData as $purchase) {
+                    if (!empty($purchase->product_id)) {
+                        $productIds[] = (int) $purchase->product_id;
+                    }
+                }
+
+                $allowedProductIds = [];
+                if (!empty($productIds)) {
+                    $products = $this->productsEntity->noLimit()->cols(['id', 'brand_id'])->find(['id' => array_unique($productIds)]);
+                    foreach ($products as $product) {
+                        if (in_array((int) $product->brand_id, $brandIds, true)) {
+                            $allowedProductIds[(int) $product->id] = true;
+                        }
+                    }
+                }
+
+                $filteredPurchases = [];
+                foreach ($purchasesData as $purchase) {
+                    $productId = !empty($purchase->product_id) ? (int) $purchase->product_id : null;
+                    if ($productId !== null && isset($allowedProductIds[$productId])) {
+                        $filteredPurchases[] = $purchase;
+                    }
+                }
+                $purchasesData = $filteredPurchases;
+            }
+
             foreach ($purchasesData as $purchase) {
                 $purchases[$purchase->order_id][] = $purchase;
             }
@@ -391,9 +429,8 @@ class BackendOrdersExportHelper
 
             $orderTtn = $includeTtn && isset($ttnData[$order->id]) ? $ttnData[$order->id] : '';
             $orderPurchases = isset($purchases[$order->id]) ? $purchases[$order->id] : [];
-            $purchasesCount = count($orderPurchases);
-            // Якщо 1 позиція - порожній рядок, якщо декілька - кількість позицій
-            $multipleItemsValue = ($purchasesCount > 1) ? $purchasesCount : '';
+            $hasMultipleItems = count($orderPurchases) > 1;
+            $multipleItemsValue = $hasMultipleItems ? $order->id : '';
 
             if (empty($orderPurchases)) {
                 $row = [];
@@ -403,10 +440,13 @@ class BackendOrdersExportHelper
                             $row[] = $order->id;
                             break;
                         case 'multiple_items':
-                            $row[] = $multipleItemsValue;
+                            $row[] = '';
                             break;
                         case 'status':
                             $row[] = $orderStatusName;
+                            break;
+                        case 'cancellation_reason':
+                            $row[] = $order->cancellation_reason_display ?? '';
                             break;
                         case 'ttn':
                             $row[] = $orderTtn;
@@ -458,6 +498,9 @@ class BackendOrdersExportHelper
                             case 'status':
                                 $row[] = $orderStatusName;
                                 break;
+                            case 'cancellation_reason':
+                                $row[] = $order->cancellation_reason_display ?? '';
+                                break;
                             case 'ttn':
                                 $row[] = $orderTtn;
                                 break;
@@ -504,5 +547,73 @@ class BackendOrdersExportHelper
         );
 
         return $data;
+    }
+
+    /**
+     * @param mixed $rawBrandIds
+     * @return array<int>
+     */
+    private function normalizeBrandIds($rawBrandIds): array
+    {
+        if (!is_array($rawBrandIds)) {
+            return [];
+        }
+
+        $brandIds = [];
+        foreach ($rawBrandIds as $rawBrandId) {
+            $brandId = (int) $rawBrandId;
+            if ($brandId > 0) {
+                $brandIds[$brandId] = $brandId;
+            }
+        }
+
+        return array_values($brandIds);
+    }
+
+    private function appendBrandOrdersFilter(array $filter, array $brandIds): array
+    {
+        if (empty($brandIds)) {
+            return $filter;
+        }
+
+        $productIds = $this->productsEntity->noLimit()->cols(['id'])->find(['brand_id' => $brandIds]);
+        if (empty($productIds)) {
+            $filter['id'] = [-1];
+            return $filter;
+        }
+
+        $normalizedProductIds = [];
+        foreach ($productIds as $productId) {
+            $productId = (int) $productId;
+            if ($productId > 0) {
+                $normalizedProductIds[$productId] = $productId;
+            }
+        }
+
+        if (empty($normalizedProductIds)) {
+            $filter['id'] = [-1];
+            return $filter;
+        }
+
+        $purchaseOrderIds = $this->purchasesEntity->noLimit()->cols(['order_id'])->find([
+            'product_id' => array_values($normalizedProductIds),
+        ]);
+
+        if (empty($purchaseOrderIds)) {
+            $filter['id'] = [-1];
+            return $filter;
+        }
+
+        $orderIds = [];
+        foreach ($purchaseOrderIds as $orderId) {
+            $orderId = (int) $orderId;
+            if ($orderId > 0) {
+                $orderIds[$orderId] = $orderId;
+            }
+        }
+
+        $filter['id'] = !empty($orderIds) ? array_values($orderIds) : [-1];
+
+        return $filter;
     }
 }

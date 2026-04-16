@@ -1,9 +1,22 @@
 {
   "Okay": "4.5.2",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "moduleName": "Export orders",
   "vendor": {
     "email": "devsviat@proton.me",
     "site": "https://github.com/devSviat"
+  },
+  "modifications": {
+    "backend": [
+      {
+        "file": "orders.tpl",
+        "changes": [
+          {
+            "find": "<div class=\"main_header__item main_header__item--sort_date\">",
+            "appendBefore": "orders_brand_filter.tpl"
+          }
+        ]
+      }
+    ]
   }
 }

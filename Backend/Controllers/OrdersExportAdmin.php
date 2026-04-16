@@ -4,40 +4,64 @@
 namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Admin\Controllers\IndexAdmin;
-use Okay\Core\Modules\Modules;
-use Okay\Entities\OrderStatusEntity;
-use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 
 /**
- * Контролер адмін-панелі для експорту замовлень
+ * Контролер адмін-панелі для налаштувань експорту замовлень
  */
 class OrdersExportAdmin extends IndexAdmin
 {
-    private string $exportFilesDir = 'backend/files/export/';
-
     /**
-     * Відображає сторінку експорту замовлень
-     * 
-     * @param OrderStatusEntity $orderStatusEntity
-     * @param BackendOrdersExportHelper $backendOrdersExportHelper
-     * @param Modules $modules
+     * Відображає сторінку налаштувань експорту замовлень
      */
-    public function fetch(
-        OrderStatusEntity $orderStatusEntity,
-        BackendOrdersExportHelper $backendOrdersExportHelper,
-        Modules $modules
-    ) {
-        $this->design->assign('export_files_dir', $this->exportFilesDir);
-        if (!is_writable($this->exportFilesDir)) {
-            $this->design->assign('message_error', 'no_permission');
+    public function fetch() {
+        if ($this->request->method('post')) {
+            $ordersCount = $this->request->post('orders_count', 'integer', 100);
+            $ordersCount = max(20, min(1000, $ordersCount));
+
+            $delimiter = (string) $this->request->post('column_delimiter');
+            if ($delimiter === 'tab') {
+                $delimiter = "\t";
+            } elseif (!in_array($delimiter, [';', ','], true)) {
+                $delimiter = ';';
+            }
+
+            $defaultExportTtn = (string) $this->request->post('default_export_ttn');
+            if (!in_array($defaultExportTtn, ['0', '1', '2'], true)) {
+                $defaultExportTtn = '0';
+            }
+
+            $showOrdersBrandFilter = $this->request->post('show_orders_brand_filter', 'boolean') ? 1 : 0;
+
+            $this->settings->set('sviat__orders_export__orders_count', $ordersCount);
+            $this->settings->set('sviat__orders_export__column_delimiter', $delimiter);
+            $this->settings->set('sviat__orders_export__default_export_ttn', $defaultExportTtn);
+            $this->settings->set('sviat__orders_export__show_orders_brand_filter', $showOrdersBrandFilter);
+
+            $this->design->assign('message_success', 'saved');
         }
 
-        $statuses = $orderStatusEntity->find();
-        $this->design->assign('statuses', $statuses);
+        $columnDelimiter = (string) $this->settings->get('sviat__orders_export__column_delimiter');
+        if (!in_array($columnDelimiter, [';', ',', "\t"], true)) {
+            $columnDelimiter = ';';
+        }
 
-        $isNovaPoshtaTrackingActive = $modules->isActiveModule('Sviat', 'NovaPoshtaTracking');
-        $this->design->assign('is_nova_poshta_tracking_active', $isNovaPoshtaTrackingActive);
+        $ordersCount = (int) $this->settings->get('sviat__orders_export__orders_count');
+        if ($ordersCount <= 0) {
+            $ordersCount = 100;
+        }
 
-        $this->response->setContent($this->design->fetch('export_orders.tpl'));
+        $defaultExportTtn = (string) $this->settings->get('sviat__orders_export__default_export_ttn');
+        if (!in_array($defaultExportTtn, ['0', '1', '2'], true)) {
+            $defaultExportTtn = '0';
+        }
+
+        $showOrdersBrandFilter = (int) $this->settings->get('sviat__orders_export__show_orders_brand_filter');
+
+        $this->design->assign('orders_export_orders_count', $ordersCount);
+        $this->design->assign('orders_export_column_delimiter', $columnDelimiter);
+        $this->design->assign('orders_export_default_export_ttn', $defaultExportTtn);
+        $this->design->assign('orders_export_show_orders_brand_filter', $showOrdersBrandFilter);
+
+        $this->response->setContent($this->design->fetch('export_orders_admin.tpl'));
     }
 }

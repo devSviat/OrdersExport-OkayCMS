@@ -1,0 +1,72 @@
+.main_header .sviat_orders_brand_filter_item {
+    margin-left: auto;
+    flex: 0 0 auto;
+}
+
+.main_header .sviat_orders_brand_filter_item .main_header__inner {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.main_header .sviat_orders_brand_filter_item .btn {
+    min-width: auto;
+}
+
+.main_header .sviat_orders_brand_filter_item .sviat_orders_brand_filter_btn svg {
+    margin-right: 0;
+}
+
+#fn_orders_brand_filter_modal .bootstrap-select .dropdown-menu {
+    left: 0;
+    right: auto;
+}
+
+#fn_orders_brand_filter_modal .modal-body {
+    position: relative;
+    text-align: left;
+}
+
+#fn_orders_brand_filter_modal .modal-content {
+    text-align: left;
+}
+
+#fn_orders_brand_filter_modal .sviat_obf_modal_head {
+    position: relative;
+    padding-right: 32px;
+    margin-bottom: 15px;
+}
+
+#fn_orders_brand_filter_modal .sviat_obf_modal_heading {
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
+    margin: 0;
+    text-align: left;
+}
+
+#fn_orders_brand_filter_modal .sviat_obf_modal_close {
+    color: #aaa;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 24px;
+    width: 24px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+#fn_orders_brand_filter_modal .sviat_obf_modal_close:hover,
+#fn_orders_brand_filter_modal .sviat_obf_modal_close:focus {
+    color: #333;
+}
+
+#fn_orders_brand_filter_modal .modal-footer {
+    justify-content: flex-start;
+    text-align: left;
+    gap: 8px;
+}
