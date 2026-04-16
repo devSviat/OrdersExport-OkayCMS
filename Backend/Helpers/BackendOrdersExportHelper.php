@@ -67,7 +67,7 @@ class BackendOrdersExportHelper
             $columnsNames = $columnsNamesWithCancellation;
         }
 
-        $exportTtn = $this->request->get('export_ttn');
+        $exportTtn = $this->exportParam('export_ttn');
         if (($exportTtn == '1' || $exportTtn == '2' || $exportTtn === 1 || $exportTtn === 2)
             && $this->modules->isActiveModule('Sviat', 'NovaPoshtaTracking')
         ) {
@@ -114,7 +114,7 @@ class BackendOrdersExportHelper
         unset($_SESSION['lang_id']);
         unset($_SESSION['admin_lang_id']);
 
-        $page = $this->request->get('page');
+        $page = $this->exportParam('page');
         if (empty($page) || $page == 1) {
             $page = 1;
             if (is_writable($exportFilesDir . $filename)) {
@@ -126,18 +126,18 @@ class BackendOrdersExportHelper
 
         $filter = ['page' => $page, 'limit' => $ordersCount];
 
-        $statusId = $this->request->get('status', 'integer');
+        $statusId = $this->exportParam('status', 'integer');
         if (!empty($statusId)) {
             $filter['status_id'] = $statusId;
         }
 
-        $labelId = $this->request->get('label', 'integer');
+        $labelId = $this->exportParam('label', 'integer');
         if (!empty($labelId)) {
             $filter['label'] = $labelId;
         }
 
-        $fromDate = $this->request->get('from_date');
-        $toDate = $this->request->get('to_date');
+        $fromDate = $this->exportParam('from_date');
+        $toDate = $this->exportParam('to_date');
 
         if (!empty($fromDate)) {
             $filter['from_date'] = $fromDate;
@@ -146,14 +146,14 @@ class BackendOrdersExportHelper
             $filter['to_date'] = $toDate;
         }
 
-        $exportTtn = $this->request->get('export_ttn');
+        $exportTtn = $this->exportParam('export_ttn');
         if (($exportTtn == '2' || $exportTtn === 2)
             && $this->modules->isActiveModule('Sviat', 'NovaPoshtaTracking')
         ) {
             $filter['has_ttn'] = true;
         }
 
-        $brandIds = $this->normalizeBrandIds($this->request->get('brand_ids'));
+        $brandIds = $this->normalizeBrandIds($this->exportParam('brand_ids'));
         $filter = $this->appendBrandOrdersFilter($filter, $brandIds);
 
         if ($page == 1) {
@@ -204,7 +204,7 @@ class BackendOrdersExportHelper
         if (!empty($ordersIds)) {
             $purchasesData = $this->purchasesEntity->find(['order_id' => $ordersIds]);
 
-            $brandIds = $this->normalizeBrandIds($this->request->get('brand_ids'));
+            $brandIds = $this->normalizeBrandIds($this->exportParam('brand_ids'));
             if (!empty($brandIds)) {
                 $productIds = [];
                 foreach ($purchasesData as $purchase) {
@@ -501,6 +501,18 @@ class BackendOrdersExportHelper
         }
 
         return array_values($brandIds);
+    }
+
+    /**
+     * Параметри фільтрації експорту: спочатку POST (не губляться при nginx-редиректі без query string), інакше GET.
+     */
+    private function exportParam(string $name, ?string $type = null, $default = null)
+    {
+        if ($this->request->method('post')) {
+            return $this->request->post($name, $type, $default);
+        }
+
+        return $this->request->get($name, $type, $default);
     }
 
     private function appendBrandOrdersFilter(array $filter, array $brandIds): array

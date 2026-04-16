@@ -135,6 +135,7 @@
         function exportPage(page, progress, status, exportTtn, brandIds) {
             return $.ajax({
                 url: "{/literal}{url_generator route="Sviat_OrdersExport_exportOrders" absolute=1}{literal}",
+                type: 'POST',
                 data: buildExportData(page, status, exportTtn, brandIds),
                 dataType: 'json'
             }).then(function (data) {
