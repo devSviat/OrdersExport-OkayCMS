@@ -182,7 +182,8 @@
                             if (data && data.end) {
                                 Piecon.setProgress(100);
                                 $progress.attr('value', 100);
-                                window.location.href = 'files/export/export_orders_enhanced.csv';
+                                // Cache-bust: без нього браузер віддає попередній CSV з disk cache замість свіжосгенерованого.
+                                window.location.href = 'files/export/export_orders_enhanced.csv?t=' + Date.now();
                                 $progress.fadeOut(500);
                                 $('#success_export').show();
                             }
