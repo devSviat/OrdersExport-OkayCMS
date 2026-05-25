@@ -202,7 +202,8 @@ class BackendOrdersExportHelper
 
         $purchases = [];
         if (!empty($ordersIds)) {
-            $purchasesData = $this->purchasesEntity->find(['order_id' => $ordersIds]);
+            // noLimit(): дефолтний select-ліміт 100 записів обрізає покупки на сторінках з багатьма замовленнями.
+            $purchasesData = $this->purchasesEntity->noLimit()->find(['order_id' => $ordersIds]);
 
             $brandIds = $this->normalizeBrandIds($this->exportParam('brand_ids'));
             if (!empty($brandIds)) {
@@ -253,7 +254,7 @@ class BackendOrdersExportHelper
 
         $statuses = [];
         if (!empty($statusesIds)) {
-            $statusesData = $this->orderStatusEntity->find(['id' => array_unique($statusesIds)]);
+            $statusesData = $this->orderStatusEntity->noLimit()->find(['id' => array_unique($statusesIds)]);
             foreach ($statusesData as $status) {
                 $statuses[$status->id] = $status;
             }
@@ -279,7 +280,8 @@ class BackendOrdersExportHelper
         if (!empty($ordersIds)) {
             try {
                 $novaPoshtaTrackingEntity = $this->entityFactory->get('Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity');
-                $trackingData = $novaPoshtaTrackingEntity->find(['order_id' => $ordersIds]);
+                // noLimit(): дефолтний ліміт + defaultOrderFields=id DESC викидає ТТН старих замовлень при великих сторінках.
+                $trackingData = $novaPoshtaTrackingEntity->noLimit()->find(['order_id' => $ordersIds]);
 
                 foreach ($trackingData as $tracking) {
                     if (!empty($tracking->int_doc_number)) {
@@ -309,7 +311,7 @@ class BackendOrdersExportHelper
         }
 
         if (!empty($productIds)) {
-            $products = $this->productsEntity->cols(['id', 'brand_id'])->find(['id' => array_unique($productIds)]);
+            $products = $this->productsEntity->noLimit()->cols(['id', 'brand_id'])->find(['id' => array_unique($productIds)]);
 
             $brandIds = [];
             $productBrandMap = [];
@@ -321,7 +323,7 @@ class BackendOrdersExportHelper
             }
 
             if (!empty($brandIds)) {
-                $brands = $this->brandsEntity->cols(['id', 'name'])->mappedBy('id')->find(['id' => array_unique($brandIds)]);
+                $brands = $this->brandsEntity->noLimit()->cols(['id', 'name'])->mappedBy('id')->find(['id' => array_unique($brandIds)]);
 
                 foreach ($purchases as $orderPurchases) {
                     foreach ($orderPurchases as $purchase) {
