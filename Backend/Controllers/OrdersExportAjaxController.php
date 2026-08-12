@@ -4,6 +4,7 @@ namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Controllers\AbstractController;
 use Okay\Core\Managers;
+use Okay\Modules\Sviat\OrdersExport\Compat\Engine;
 use Okay\Entities\ManagersEntity;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 
@@ -16,13 +17,19 @@ class OrdersExportAjaxController extends AbstractController
         ManagersEntity $managersEntity,
         BackendOrdersExportHelper $backendOrdersExportHelper
     ) {
-        if (empty($_SESSION['admin'])) {
+        // Маршрут оголошений як to_front, тож запит іде через вітрину. Логін
+        // менеджера береться через Engine: там, де сесії вітрини й адмінки
+        // розділені на різні куки, $_SESSION['admin'] тут порожній завжди.
+        $adminLogin = Engine::adminLogin();
+        if (empty($adminLogin)) {
+            $this->response->setStatusCode(401);
             $this->response->setContent(json_encode(['error' => 'Unauthorized']), RESPONSE_JSON);
             return;
         }
 
-        $manager = $managersEntity->get($_SESSION['admin']);
+        $manager = $managersEntity->get($adminLogin);
         if (!$manager || !$managers->access('export', $manager)) {
+            $this->response->setStatusCode(403);
             $this->response->setContent(json_encode(['error' => 'Access denied']), RESPONSE_JSON);
             return;
         }

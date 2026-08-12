@@ -182,8 +182,10 @@
                             if (data && data.end) {
                                 Piecon.setProgress(100);
                                 $progress.attr('value', 100);
-                                // Cache-bust: без нього браузер віддає попередній CSV з disk cache замість свіжосгенерованого.
-                                window.location.href = 'files/export/export_orders_enhanced.csv?t=' + Date.now();
+                                // Через backend/files/ файл не віддається: там білий список ядра,
+                                // у якому нашого імені немає. Модуль віддає CSV своїм контролером.
+                                // Cache-bust: без нього браузер віддає попередній CSV з disk cache.
+                                window.location.href = 'index.php?controller=Sviat.OrdersExport.OrdersExportDownloadAdmin&t=' + Date.now();
                                 $progress.fadeOut(500);
                                 $('#success_export').show();
                             }
