@@ -4,7 +4,7 @@ namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Controllers\AbstractController;
 use Okay\Core\Managers;
-use Okay\Modules\Sviat\OrdersExport\Compat\Engine;
+use Okay\Modules\Sviat\OrdersExport\Compat\AdminIdentity;
 use Okay\Entities\ManagersEntity;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 
@@ -13,14 +13,15 @@ class OrdersExportAjaxController extends AbstractController
 {
     /** Запускає експорт замовлень у CSV. */
     public function exportOrders(
+        AdminIdentity $adminIdentity,
         Managers $managers,
         ManagersEntity $managersEntity,
         BackendOrdersExportHelper $backendOrdersExportHelper
     ) {
-        // Маршрут оголошений як to_front, тож запит іде через вітрину. Логін
-        // менеджера береться через Engine: там, де сесії вітрини й адмінки
-        // розділені на різні куки, $_SESSION['admin'] тут порожній завжди.
-        $adminLogin = Engine::adminLogin();
+        // Маршрут оголошений як to_front, тож запит іде через вітрину повз
+        // авторизацію бекенду. Звідки береться логін менеджера, вирішує
+        // AdminIdentity: рушії зберігають бекендову сесію по-різному.
+        $adminLogin = $adminIdentity->login();
         if (empty($adminLogin)) {
             $this->response->setStatusCode(401);
             $this->response->setContent(json_encode(['error' => 'Unauthorized']), RESPONSE_JSON);
