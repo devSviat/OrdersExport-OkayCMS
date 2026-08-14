@@ -2,8 +2,8 @@
 
 namespace Modules\Sviat\OrdersExport;
 
-use Okay\Modules\Sviat\OrdersExport\Compat\AdminIdentity;
-use Okay\Modules\Sviat\OrdersExport\Compat\SharedSessionAdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Services\AdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Services\SharedSessionAdminIdentity;
 use PHPUnit\Framework\TestCase;
 
 /**

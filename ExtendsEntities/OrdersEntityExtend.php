@@ -10,6 +10,15 @@ use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
 /** Додаткові фільтри для експорту замовлень. */
 class OrdersEntityExtend extends AbstractModuleEntityFilter
 {
+    /**
+     * Окремим методом, щоб обидві гілки has_ttn були перевіримі: наявність
+     * класу — глобальний стан процесу, і в тесті його не підмінити.
+     */
+    protected function hasTrackingModule(): bool
+    {
+        return class_exists(NovaPoshtaTrackingEntity::class);
+    }
+
     /** Фільтр замовлень, у яких є ТТН. */
     public function filter__has_ttn($value, $filter)
     {
@@ -18,6 +27,15 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
         }
 
         $tableAlias = OriginalOrdersEntity::getTableAlias();
+
+        // Модуль трекінгу необов'язковий. Без нього ТТН немає ні в кого, тож
+        // порожній результат — правильна відповідь: пропустити фільтр означало б
+        // віддати в експорт усі замовлення підряд.
+        if (!$this->hasTrackingModule()) {
+            $this->select->where('1 = 0');
+            return;
+        }
+
         $trackingTable = NovaPoshtaTrackingEntity::getTable();
 
         $this->select->join('INNER', "{$trackingTable} AS npt_has_ttn", "{$tableAlias}.id = npt_has_ttn.order_id");
