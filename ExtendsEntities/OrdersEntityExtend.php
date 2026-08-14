@@ -6,6 +6,7 @@ namespace Okay\Modules\Sviat\OrdersExport\ExtendsEntities;
 use Okay\Core\Modules\AbstractModuleEntityFilter;
 use Okay\Entities\OrdersEntity as OriginalOrdersEntity;
 use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
+use Okay\Modules\Sviat\OrdersExport\Compat\Engine;
 
 /** Додаткові фільтри для експорту замовлень. */
 class OrdersEntityExtend extends AbstractModuleEntityFilter
@@ -16,7 +17,7 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
      */
     protected function hasTrackingModule(): bool
     {
-        return class_exists(NovaPoshtaTrackingEntity::class);
+        return Engine::hasClass(NovaPoshtaTrackingEntity::class);
     }
 
     /** Фільтр замовлень, у яких є ТТН. */
