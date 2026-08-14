@@ -4,6 +4,8 @@
 namespace Okay\Modules\Sviat\OrdersExport\ExtendsEntities;
 
 use Okay\Core\Modules\AbstractModuleEntityFilter;
+use Okay\Core\Modules\Modules;
+use Okay\Core\ServiceLocator;
 use Okay\Entities\OrdersEntity as OriginalOrdersEntity;
 use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
 
@@ -11,12 +13,21 @@ use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
 class OrdersEntityExtend extends AbstractModuleEntityFilter
 {
     /**
-     * Окремим методом, щоб обидві гілки has_ttn були перевіримі: наявність
-     * класу — глобальний стан процесу, і в тесті його не підмінити.
+     * Окремим методом, щоб обидві гілки has_ttn були перевіримі: стан рушія в
+     * тесті не підмінити.
+     *
+     * Дві умови, бо кожна закриває свій випадок: без класу нема в кого спитати
+     * назву таблиці, без установленого модуля тієї таблиці нема в базі. Решта
+     * модуля питає саме isActiveModule(), тож і тут так само.
+     *
+     * ServiceLocator, а не DI: фільтри сутностей створюються через голий new.
      */
     protected function hasTrackingModule(): bool
     {
-        return class_exists(NovaPoshtaTrackingEntity::class);
+        return class_exists(NovaPoshtaTrackingEntity::class)
+            && ServiceLocator::getInstance()
+                ->getService(Modules::class)
+                ->isActiveModule('Sviat', 'NovaPoshtaTracking');
     }
 
     /** Фільтр замовлень, у яких є ТТН. */
