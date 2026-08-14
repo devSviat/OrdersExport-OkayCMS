@@ -4,7 +4,7 @@ namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Controllers\AbstractController;
 use Okay\Core\Managers;
-use Okay\Modules\Sviat\OrdersExport\Compat\AdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Services\AdminIdentity;
 use Okay\Entities\ManagersEntity;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 

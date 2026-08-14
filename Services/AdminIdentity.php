@@ -1,6 +1,6 @@
 <?php
 
-namespace Okay\Modules\Sviat\OrdersExport\Compat;
+namespace Okay\Modules\Sviat\OrdersExport\Services;
 
 /**
  * Логін менеджера, залогіненого в адмінці, або null.

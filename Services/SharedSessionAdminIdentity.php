@@ -1,6 +1,6 @@
 <?php
 
-namespace Okay\Modules\Sviat\OrdersExport\Compat;
+namespace Okay\Modules\Sviat\OrdersExport\Services;
 
 /**
  * Рушій з однією сесією на вітрину й адмінку: логін менеджера лежить
