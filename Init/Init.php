@@ -20,8 +20,10 @@ class Init extends AbstractInit
     {
         $this->registerBackendController('OrdersExportAdmin');
         $this->registerBackendController('OrdersExportRunAdmin');
+        $this->registerBackendController('OrdersExportDownloadAdmin');
         $this->addBackendControllerPermission('OrdersExportAdmin', 'export');
         $this->addBackendControllerPermission('OrdersExportRunAdmin', 'export');
+        $this->addBackendControllerPermission('OrdersExportDownloadAdmin', 'export');
         $this->registerChainExtension(
             [BackendOrdersHelper::class, 'buildFilter'],
             [BackendExtender::class, 'buildFilter']

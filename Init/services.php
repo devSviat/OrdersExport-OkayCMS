@@ -10,8 +10,20 @@ use Okay\Core\Request;
 use Okay\Core\Settings;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 use Okay\Modules\Sviat\OrdersExport\Extenders\BackendExtender;
+use Okay\Modules\Sviat\OrdersExport\Compat\AdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Compat\SeparateSessionAdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Compat\SharedSessionAdminIdentity;
 
 return [
+    // Композиційний корінь: рушій визначається один раз, тут. Далі
+    // контролери працюють з портом і про різницю не знають. За номером
+    // версії рушії не розрізнити — обидва звуть себе 4.5.2.
+    AdminIdentity::class => [
+        'class' => class_exists('Okay\\Core\\Security\\SessionNames')
+            ? SeparateSessionAdminIdentity::class
+            : SharedSessionAdminIdentity::class,
+        'arguments' => [],
+    ],
     BackendOrdersExportHelper::class => [
         'class' => BackendOrdersExportHelper::class,
         'arguments' => [
