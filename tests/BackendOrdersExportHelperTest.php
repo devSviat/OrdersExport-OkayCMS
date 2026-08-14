@@ -16,6 +16,12 @@ use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/RequestStub.php';
 
+// Сусідній модуль NovaPoshtaTracking необов'язковий і в прогоні релізу поруч
+// його немає — без класу createMock() не має що дублювати.
+if (!class_exists(NovaPoshtaTrackingEntity::class)) {
+    require_once __DIR__ . '/NovaPoshtaTrackingEntityStub.php';
+}
+
 /**
  * Перевіряє, що допоміжні методи експорту не втрачають дані через дефолтний ліміт 100 у Entity.
  *
