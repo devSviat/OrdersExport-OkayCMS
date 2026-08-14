@@ -1,6 +1,6 @@
 <?php
 
-namespace Okay\Modules\Sviat\OrdersExport\Services;
+namespace Okay\Modules\Sviat\OrdersExport\Security;
 
 use Okay\Core\Security\SessionNames;
 

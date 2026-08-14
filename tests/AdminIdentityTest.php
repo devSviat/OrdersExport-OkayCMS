@@ -2,7 +2,7 @@
 
 namespace Modules\Sviat\OrdersExport;
 
-use Okay\Modules\Sviat\OrdersExport\Services\AdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Security\AdminIdentity;
 use PHPUnit\Framework\TestCase;
 
 /**

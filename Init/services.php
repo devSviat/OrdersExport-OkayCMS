@@ -10,7 +10,7 @@ use Okay\Core\Request;
 use Okay\Core\Settings;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 use Okay\Modules\Sviat\OrdersExport\Extenders\BackendExtender;
-use Okay\Modules\Sviat\OrdersExport\Services\AdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Security\AdminIdentity;
 
 return [
     AdminIdentity::class => [
