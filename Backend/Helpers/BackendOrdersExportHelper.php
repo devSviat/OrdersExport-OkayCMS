@@ -341,7 +341,13 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $brandsData, func_get_args());
     }
 
-    /** Записує поточну порцію замовлень у CSV. */
+    /**
+     * Записує поточну порцію замовлень у CSV.
+     *
+     * Колонка без свого case бере значення з однойменного поля замовлення. Так
+     * сусідній модуль додає свою колонку самим лише extender'ом на
+     * getColumnsNames(), не чіпаючи цей метод.
+     */
     public function exportRun($exportFilesDir, $filename, $orders, $purchases, $statuses, $filter, $columnsNames, $columnDelimiter, $ordersCount, $page)
     {
         $f = fopen($exportFilesDir . $filename, 'ab');
@@ -408,7 +414,7 @@ class BackendOrdersExportHelper
                             $row[] = $order->date;
                             break;
                         default:
-                            $row[] = '';
+                            $row[] = $order->$key ?? '';
                     }
                 }
                 fputcsv($f, $row, $columnDelimiter, '"', '\\');
@@ -461,7 +467,7 @@ class BackendOrdersExportHelper
                                 $row[] = $order->date;
                                 break;
                             default:
-                                $row[] = '';
+                                $row[] = $order->$key ?? '';
                         }
                     }
                     fputcsv($f, $row, $columnDelimiter, '"', '\\');
