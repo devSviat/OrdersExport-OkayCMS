@@ -5,6 +5,7 @@ namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 use Okay\Controllers\AbstractController;
 use Okay\Core\Managers;
 use Okay\Modules\Sviat\OrdersExport\Security\AdminIdentity;
+use Okay\Modules\Sviat\OrdersExport\Security\RequestOrigin;
 use Okay\Entities\ManagersEntity;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 
@@ -19,8 +20,22 @@ class OrdersExportAjaxController extends AbstractController
         BackendOrdersExportHelper $backendOrdersExportHelper
     ) {
         // Маршрут оголошений як to_front, тож запит іде через вітрину повз
-        // авторизацію бекенду. Звідки береться логін менеджера, вирішує
-        // AdminIdentity: рушії зберігають бекендову сесію по-різному.
+        // авторизацію бекенду. Перевіряємо дві різні речі: *хто* звертається
+        // (AdminIdentity — рушії зберігають бекендову сесію по-різному) і
+        // *звідки* (RequestOrigin разом із вимогою POST — кука адмінки має
+        // SameSite=Lax, тож єдиний міжсайтовий шлях до неї — GET-навігація).
+        if (!$this->request->method('post')) {
+            $this->response->setStatusCode(405);
+            $this->response->setContent(json_encode(['error' => 'Method Not Allowed']), RESPONSE_JSON);
+            return;
+        }
+
+        if (!RequestOrigin::isFromThisSite()) {
+            $this->response->setStatusCode(403);
+            $this->response->setContent(json_encode(['error' => 'Forbidden']), RESPONSE_JSON);
+            return;
+        }
+
         $adminLogin = $adminIdentity->login();
         if (empty($adminLogin)) {
             $this->response->setStatusCode(401);
