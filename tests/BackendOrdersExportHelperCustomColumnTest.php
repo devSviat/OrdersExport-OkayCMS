@@ -107,13 +107,13 @@ class BackendOrdersExportHelperCustomColumnTest extends TestCase
 
     private function buildHelper(): BackendOrdersExportHelper
     {
-        $factory = $this->createMock(EntityFactory::class);
-        $factory->method('get')->willReturnCallback(fn (string $class) => $this->createMock($class));
+        $factory = $this->createStub(EntityFactory::class);
+        $factory->method('get')->willReturnCallback(fn (string $class) => $this->createStub($class));
 
-        $settings = $this->createMock(Settings::class);
+        $settings = $this->createStub(Settings::class);
         $settings->method('get')->willReturn(null);
 
-        $modules = $this->createMock(Modules::class);
+        $modules = $this->createStub(Modules::class);
         $modules->method('isActiveModule')->willReturn(false);
 
         return new BackendOrdersExportHelper($factory, new RequestStub(true), $settings, $modules);
