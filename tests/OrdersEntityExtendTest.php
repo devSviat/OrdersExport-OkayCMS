@@ -32,7 +32,7 @@ class OrdersEntityExtendTest extends TestCase
             };
         };
 
-        $select = $this->createMock(Select::class);
+        $select = $this->createStub(Select::class);
         foreach (['join', 'where', 'groupBy', 'bindValue'] as $method) {
             $select->method($method)->willReturnCallback($record($method));
         }

@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/RequestStub.php';
 
 // Сусідній модуль NovaPoshtaTracking необов'язковий і в прогоні релізу поруч
-// його немає — без класу createMock() не має що дублювати.
+// його немає — без класу createStub() не має що дублювати.
 if (!class_exists(NovaPoshtaTrackingEntity::class)) {
     require_once __DIR__ . '/NovaPoshtaTrackingEntityStub.php';
 }
@@ -214,7 +214,7 @@ class BackendOrdersExportHelperTest extends TestCase
      */
     private function buildHelper(array $entityMocks, array $activeModules = [], ?Request $request = null): BackendOrdersExportHelper
     {
-        $factory = $this->createMock(EntityFactory::class);
+        $factory = $this->createStub(EntityFactory::class);
         $factory->method('get')->willReturnCallback(function (string $class) use ($entityMocks) {
             if (isset($entityMocks[$class])) {
                 return $entityMocks[$class];
@@ -228,10 +228,10 @@ class BackendOrdersExportHelperTest extends TestCase
             $request = new RequestStub(true);
         }
 
-        $settings = $this->createMock(Settings::class);
+        $settings = $this->createStub(Settings::class);
         $settings->method('get')->willReturn(null);
 
-        $modules = $this->createMock(Modules::class);
+        $modules = $this->createStub(Modules::class);
         $modules->method('isActiveModule')->willReturnCallback(
             static fn ($_vendor, string $name) => $activeModules[$name] ?? false
         );
@@ -311,7 +311,7 @@ class BackendOrdersExportHelperTest extends TestCase
      */
     private function buildEntityMock(string $entityClass, array $records, array $filterableFields, ?string $defaultMappedByField = null)
     {
-        $mock = $this->createMock($entityClass);
+        $mock = $this->createStub($entityClass);
 
         // mappedBy() — final у базовому Entity, його не можна перевизначити createMock.
         // Він безпечний при $defaultMappedByField=null (production-код просто не викликатиме його).
