@@ -184,7 +184,7 @@ class BackendOrdersExportHelper
                         }
                     }
                 }
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 // Ігноруємо, якщо модуль недоступний.
             }
         }
@@ -279,7 +279,7 @@ class BackendOrdersExportHelper
 
         if (!empty($ordersIds)) {
             try {
-                $novaPoshtaTrackingEntity = $this->entityFactory->get('Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity');
+                $novaPoshtaTrackingEntity = $this->entityFactory->get(\Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity::class);
                 // noLimit(): дефолтний ліміт + defaultOrderFields=id DESC викидає ТТН старих замовлень при великих сторінках.
                 $trackingData = $novaPoshtaTrackingEntity->noLimit()->find(['order_id' => $ordersIds]);
 
@@ -288,7 +288,7 @@ class BackendOrdersExportHelper
                         $ttnData[$tracking->order_id] = $tracking->int_doc_number;
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Exception) {
                 // Ігноруємо, якщо модуль або entity недоступні.
             }
         }
@@ -372,7 +372,7 @@ class BackendOrdersExportHelper
             }
 
             $orderTtn = $includeTtn && isset($ttnData[$order->id]) ? $ttnData[$order->id] : '';
-            $orderPurchases = isset($purchases[$order->id]) ? $purchases[$order->id] : [];
+            $orderPurchases = $purchases[$order->id] ?? [];
             $hasMultipleItems = count($orderPurchases) > 1;
             $multipleItemsValue = $hasMultipleItems ? $order->id : '';
 

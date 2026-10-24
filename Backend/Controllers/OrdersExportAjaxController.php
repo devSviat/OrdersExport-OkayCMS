@@ -66,7 +66,7 @@ class OrdersExportAjaxController extends AbstractController
             $ordersCount
         );
         
-        list($filter, $page) = $result;
+        [$filter, $page] = $result;
 
         $orders = $backendOrdersExportHelper->fetchOrders($filter);
         $purchases = $backendOrdersExportHelper->attachPurchases($orders);
