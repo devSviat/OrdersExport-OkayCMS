@@ -157,7 +157,7 @@ class BackendOrdersExportHelper
         $filter = $this->appendBrandOrdersFilter($filter, $brandIds);
 
         if ($page == 1) {
-            fputcsv($f, $columnsNames, $columnDelimiter, '"', '\\');
+            fputcsv($f, $columnsNames, $columnDelimiter, '"', '');
         }
 
         fclose($f);
@@ -417,7 +417,7 @@ class BackendOrdersExportHelper
                             $row[] = $order->$key ?? '';
                     }
                 }
-                fputcsv($f, $row, $columnDelimiter, '"', '\\');
+                fputcsv($f, $row, $columnDelimiter, '"', '');
             } else {
                 foreach ($orderPurchases as $purchase) {
                     $productName = $purchase->product_name;
@@ -470,7 +470,7 @@ class BackendOrdersExportHelper
                                 $row[] = $order->$key ?? '';
                         }
                     }
-                    fputcsv($f, $row, $columnDelimiter, '"', '\\');
+                    fputcsv($f, $row, $columnDelimiter, '"', '');
                 }
             }
         }
