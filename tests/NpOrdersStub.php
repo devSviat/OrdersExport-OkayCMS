@@ -36,6 +36,6 @@ final class NpOrders
 
     public static function waybillTable(): string
     {
-        return '__sviat__novaposhta_waybill';
+        return '__sviat__novaposhta__waybill';
     }
 }
