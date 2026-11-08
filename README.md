@@ -8,7 +8,7 @@
 - Фільтрація замовлень за статусом
 - Фільтрація замовлень за датою (з/до)
 - Фільтрація замовлень за мітками
-- Експорт номерів ТТН (якщо встановлено модуль [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS)):
+- Експорт номерів ТТН (якщо встановлено модуль [Нова Пошта](https://github.com/devSviat/NovaPoshta-OkayCMS) або старий [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS)):
   - Додавання колонки з ТТН до експорту
   - Фільтрація тільки замовлень з ТТН
 - Детальна інформація про кожен товар у замовленні:
@@ -31,7 +31,7 @@
 - PHP 8.5+
 - OkayCMS 4.5.3 (чиста або [форк](https://github.com/devSviat/OkayCMS-Fork))
 - Перевірено на PHP 8.5 — на чистій OkayCMS 4.5.3 і на форку
-- (Опціонально) Модуль [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS) для експорту ТТН
+- (Опціонально) Модуль [Нова Пошта](https://github.com/devSviat/NovaPoshta-OkayCMS) або старий [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS) для експорту ТТН
 
 ## Встановлення
 
@@ -60,7 +60,7 @@
 1. Після встановлення модуля перейдіть в адмін-панель → Замовлення → Експорт
 2. Оберіть параметри експорту:
    - **Статус замовлення** - виберіть конкретний статус або залиште "Всі статуси"
-   - **Експортувати ТТН** (якщо встановлено модуль [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS)):
+   - **Експортувати ТТН** (якщо встановлено модуль [Нова Пошта](https://github.com/devSviat/NovaPoshta-OkayCMS) або старий [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS)):
      - "Не додавати" - ТТН не будуть включені в експорт
      - "Додати ТТН" - ТТН будуть додані як окрема колонка
      - "Тільки з ТТН" - експортуються тільки замовлення, які мають ТТН
@@ -85,12 +85,14 @@ CSV файл містить наступні колонки:
 
 **Важливо:** Кожен товар з замовлення виводиться окремим рядком. Якщо в замовленні кілька товарів, номер замовлення та інформація про замовлення будуть повторюватися для кожного товару.
 
-## Інтеграція з NovaPoshtaTracking
+## Інтеграція з модулями Нової Пошти
 
-Якщо встановлено модуль [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS), модуль OrdersExport автоматично:
+Якщо встановлено модуль [Нова Пошта](https://github.com/devSviat/NovaPoshta-OkayCMS) або старий [NovaPoshtaTracking](https://github.com/devSviat/NovaPoshtaTracking-OkayCMS), модуль OrdersExport автоматично:
 - Визначає наявність модуля та додає опції експорту ТТН
 - Додає колонку "ТТН доставки" до експорту
 - Дозволяє фільтрувати замовлення з ТТН
+
+Поки встановлені обидва модулі, ТТН беруться з обох; якщо накладна замовлення є в обох — з модуля Нова Пошта.
 
 ## Важливо
 

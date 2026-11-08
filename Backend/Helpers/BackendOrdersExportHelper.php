@@ -3,6 +3,7 @@
 
 namespace Okay\Modules\Sviat\OrdersExport\Backend\Helpers;
 
+use Okay\Modules\Sviat\OrdersExport\Helpers\NovaPoshtaWaybills;
 use Okay\Core\EntityFactory;
 use Okay\Core\Modules\Extender\ExtenderFacade;
 use Okay\Core\Modules\Modules;
@@ -28,7 +29,9 @@ class BackendOrdersExportHelper
     private EntityFactory $entityFactory;
     private Modules $modules;
 
-    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules)
+    private NovaPoshtaWaybills $npWaybills;
+
+    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules, ?NovaPoshtaWaybills $npWaybills = null)
     {
         $this->ordersEntity = $entityFactory->get(OrdersEntity::class);
         $this->purchasesEntity = $entityFactory->get(PurchasesEntity::class);
@@ -39,6 +42,7 @@ class BackendOrdersExportHelper
         $this->settings = $settings;
         $this->entityFactory = $entityFactory;
         $this->modules = $modules;
+        $this->npWaybills = $npWaybills ?? new NovaPoshtaWaybills($modules, $entityFactory);
     }
 
     /** Повертає назви колонок для експорту. */
@@ -69,7 +73,7 @@ class BackendOrdersExportHelper
 
         $exportTtn = $this->exportParam('export_ttn');
         if (($exportTtn == '1' || $exportTtn == '2' || $exportTtn === 1 || $exportTtn === 2)
-            && $this->modules->isActiveModule('Sviat', 'NovaPoshtaTracking')
+            && $this->npWaybills->available()
         ) {
             $columnsNamesWithTtn = [];
             foreach ($columnsNames as $key => $value) {
@@ -148,7 +152,7 @@ class BackendOrdersExportHelper
 
         $exportTtn = $this->exportParam('export_ttn');
         if (($exportTtn == '2' || $exportTtn === 2)
-            && $this->modules->isActiveModule('Sviat', 'NovaPoshtaTracking')
+            && $this->npWaybills->available()
         ) {
             $filter['has_ttn'] = true;
         }
@@ -263,35 +267,15 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $statuses, func_get_args());
     }
 
-    /** Повертає ТТН для замовлень. */
+    /** Повертає ТТН для замовлень — з модуля Sviat/NovaPoshta чи старого NovaPoshtaTracking. */
     public function attachTtn($orders)
     {
-        $ttnData = [];
-
-        if (!$this->modules->isActiveModule('Sviat', 'NovaPoshtaTracking')) {
-            return ExtenderFacade::execute(__METHOD__, $ttnData, func_get_args());
-        }
-
         $ordersIds = [];
         foreach ($orders as $order) {
-            $ordersIds[] = $order->id;
+            $ordersIds[] = (int)$order->id;
         }
 
-        if (!empty($ordersIds)) {
-            try {
-                $novaPoshtaTrackingEntity = $this->entityFactory->get(\Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity::class);
-                // noLimit(): дефолтний ліміт + defaultOrderFields=id DESC викидає ТТН старих замовлень при великих сторінках.
-                $trackingData = $novaPoshtaTrackingEntity->noLimit()->find(['order_id' => $ordersIds]);
-
-                foreach ($trackingData as $tracking) {
-                    if (!empty($tracking->int_doc_number)) {
-                        $ttnData[$tracking->order_id] = $tracking->int_doc_number;
-                    }
-                }
-            } catch (\Exception) {
-                // Ігноруємо, якщо модуль або entity недоступні.
-            }
-        }
+        $ttnData = $this->npWaybills->numbers($ordersIds);
 
         return ExtenderFacade::execute(__METHOD__, $ttnData, func_get_args());
     }

@@ -4,10 +4,9 @@
 namespace Okay\Modules\Sviat\OrdersExport\ExtendsEntities;
 
 use Okay\Core\Modules\AbstractModuleEntityFilter;
-use Okay\Core\Modules\Modules;
 use Okay\Core\ServiceLocator;
 use Okay\Entities\OrdersEntity as OriginalOrdersEntity;
-use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
+use Okay\Modules\Sviat\OrdersExport\Helpers\NovaPoshtaWaybills;
 
 /** Додаткові фільтри для експорту замовлень. */
 class OrdersEntityExtend extends AbstractModuleEntityFilter
@@ -16,21 +15,17 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
      * Окремим методом, щоб обидві гілки has_ttn були перевіримі: стан рушія в
      * тесті не підмінити.
      *
-     * Дві умови, бо кожна закриває свій випадок: без класу нема в кого спитати
-     * назву таблиці, без установленого модуля тієї таблиці нема в базі. Решта
-     * модуля питає саме isActiveModule(), тож і тут так само.
-     *
      * ServiceLocator, а не DI: фільтри сутностей створюються через голий new.
      */
-    protected function hasTrackingModule(): bool
+    protected function ttnOrdersSql(): ?string
     {
-        return class_exists(NovaPoshtaTrackingEntity::class)
-            && ServiceLocator::getInstance()
-                ->getService(Modules::class)
-                ->isActiveModule('Sviat', 'NovaPoshtaTracking');
+        return ServiceLocator::getInstance()->getService(NovaPoshtaWaybills::class)->ordersWithWaybillSql();
     }
 
-    /** Фільтр замовлень, у яких є ТТН. */
+    /**
+     * Фільтр замовлень, у яких є ТТН — у модулі Sviat/NovaPoshta чи старому NovaPoshtaTracking.
+     * Підзапит, а не JOIN: з двома модулями JOIN повторював би замовлення з накладною в обох.
+     */
     public function filter__has_ttn($value, $filter)
     {
         if ($value !== true && $value !== 1 && $value !== '1') {
@@ -38,21 +33,17 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
         }
 
         $tableAlias = OriginalOrdersEntity::getTableAlias();
+        $sql = $this->ttnOrdersSql();
 
-        // Модуль трекінгу необов'язковий. Без нього ТТН немає ні в кого, тож
+        // Модулі Нової Пошти необов'язкові. Без них ТТН немає ні в кого, тож
         // порожній результат — правильна відповідь: пропустити фільтр означало б
         // віддати в експорт усі замовлення підряд.
-        if (!$this->hasTrackingModule()) {
+        if ($sql === null) {
             $this->select->where('1 = 0');
             return;
         }
 
-        $trackingTable = NovaPoshtaTrackingEntity::getTable();
-
-        $this->select->join('INNER', "{$trackingTable} AS npt_has_ttn", "{$tableAlias}.id = npt_has_ttn.order_id");
-        $this->select->where('npt_has_ttn.int_doc_number IS NOT NULL');
-        $this->select->where("npt_has_ttn.int_doc_number != ''");
-        $this->select->groupBy([$tableAlias . '.id']);
+        $this->select->where("{$tableAlias}.id IN ({$sql})");
     }
 
     /** Фільтр замовлень за брендами товарів. */
