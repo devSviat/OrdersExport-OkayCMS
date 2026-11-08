@@ -43,7 +43,7 @@ class OrdersEntityExtendTest extends TestCase
             ? new class extends OrdersEntityExtend {
                 protected function ttnOrdersSql(): ?string
                 {
-                    return "SELECT order_id FROM __sviat__novaposhta_waybill WHERE number <> ''";
+                    return "SELECT order_id FROM __sviat__novaposhta__waybill WHERE number <> ''";
                 }
             }
             : new class extends OrdersEntityExtend {
@@ -92,7 +92,7 @@ class OrdersEntityExtendTest extends TestCase
 
         self::assertNotContains('join', $this->methodsCalled());
         self::assertNotContains('groupBy', $this->methodsCalled());
-        self::assertStringEndsWith(".id IN (SELECT order_id FROM __sviat__novaposhta_waybill WHERE number <> '')", $this->firstArgs('where')[0] ?? '');
+        self::assertStringEndsWith(".id IN (SELECT order_id FROM __sviat__novaposhta__waybill WHERE number <> '')", $this->firstArgs('where')[0] ?? '');
     }
 
     /**
