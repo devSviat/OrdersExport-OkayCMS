@@ -37,19 +37,19 @@ class OrdersEntityExtendTest extends TestCase
             $select->method($method)->willReturnCallback($record($method));
         }
 
-        // Підміняється й гілка «модуль є»: справжній hasTrackingModule() пішов би
+        // Підміняється й гілка «модуль є»: справжній ttnOrdersSql() пішов би
         // в контейнер по Modules, а модульний тест рушія не піднімає.
         $filter = $trackingModule
             ? new class extends OrdersEntityExtend {
-                protected function hasTrackingModule(): bool
+                protected function ttnOrdersSql(): ?string
                 {
-                    return true;
+                    return "SELECT order_id FROM __sviat__novaposhta__waybill WHERE number <> ''";
                 }
             }
             : new class extends OrdersEntityExtend {
-                protected function hasTrackingModule(): bool
+                protected function ttnOrdersSql(): ?string
                 {
-                    return false;
+                    return null;
                 }
             };
         $filter->setSelect($select);
@@ -84,13 +84,15 @@ class OrdersEntityExtendTest extends TestCase
         self::assertSame([], $this->methodsCalled(), 'без запиту фільтр не має чіпати запит');
     }
 
-    public function testJoinsTrackingTableWhenModuleIsPresent(): void
+    /** Підзапит, а не JOIN: з двома модулями JOIN повторював би замовлення, що мають накладну в обох. */
+    public function testLimitsToOrdersWithWaybillWhenModuleIsPresent(): void
     {
         $filter = $this->makeFilter();
         $filter->filter__has_ttn(true, []);
 
-        self::assertContains('join', $this->methodsCalled());
-        self::assertStringContainsString('npt_has_ttn', $this->firstArgs('join')[1]);
+        self::assertNotContains('join', $this->methodsCalled());
+        self::assertNotContains('groupBy', $this->methodsCalled());
+        self::assertStringEndsWith(".id IN (SELECT order_id FROM __sviat__novaposhta__waybill WHERE number <> '')", $this->firstArgs('where')[0] ?? '');
     }
 
     /**
