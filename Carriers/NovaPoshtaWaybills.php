@@ -1,6 +1,6 @@
 <?php
 
-namespace Okay\Modules\Sviat\OrdersExport\Helpers;
+namespace Okay\Modules\Sviat\OrdersExport\Carriers;
 
 use Closure;
 use Okay\Core\EntityFactory;
@@ -13,7 +13,7 @@ use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
  * Номери накладних з модуля Sviat/NovaPoshta і старого NovaPoshtaTracking — того, що ввімкнений;
  * якщо накладна замовлення є в обох, береться нова.
  */
-final class NovaPoshtaWaybills
+final class NovaPoshtaWaybills implements CarrierNumbers
 {
     private readonly Closure $npOrders;
 
@@ -60,7 +60,7 @@ final class NovaPoshtaWaybills
     }
 
     /** Підзапит id замовлень, що мають накладну; null — жоден модуль не ввімкнений. */
-    public function ordersWithWaybillSql(): ?string
+    public function ordersWithNumberSql(): ?string
     {
         $parts = [];
         if ($this->newActive()) {

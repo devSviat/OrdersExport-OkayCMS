@@ -4,7 +4,7 @@
 namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Admin\Controllers\IndexAdmin;
-use Okay\Modules\Sviat\OrdersExport\Helpers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
 use Okay\Entities\BrandsEntity;
 use Okay\Entities\OrderStatusEntity;
 
@@ -17,7 +17,7 @@ class OrdersExportRunAdmin extends IndexAdmin
     public function fetch(
         OrderStatusEntity $orderStatusEntity,
         BrandsEntity $brandsEntity,
-        NovaPoshtaWaybills $npWaybills
+        CarrierNumbers $carriers
     ) {
         $defaultExportTtn = (string) $this->settings->get('sviat__orders_export__default_export_ttn');
         if (!in_array($defaultExportTtn, ['0', '1', '2'], true)) {
@@ -36,7 +36,7 @@ class OrdersExportRunAdmin extends IndexAdmin
         $brands = $brandsEntity->find(['limit' => $brandsEntity->count()]);
         $this->design->assign('brands', $brands);
 
-        $this->design->assign('is_nova_poshta_tracking_active', $npWaybills->available());
+        $this->design->assign('is_carrier_available', $carriers->available());
 
         $this->response->setContent($this->design->fetch('export_orders.tpl'));
     }

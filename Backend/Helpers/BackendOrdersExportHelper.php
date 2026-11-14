@@ -3,7 +3,11 @@
 
 namespace Okay\Modules\Sviat\OrdersExport\Backend\Helpers;
 
-use Okay\Modules\Sviat\OrdersExport\Helpers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\AllCarrierNumbers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\DeliveryCarriers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\UkrposhtaBarcodes;
 use Okay\Core\EntityFactory;
 use Okay\Core\Modules\Extender\ExtenderFacade;
 use Okay\Core\Modules\Modules;
@@ -29,9 +33,9 @@ class BackendOrdersExportHelper
     private EntityFactory $entityFactory;
     private Modules $modules;
 
-    private NovaPoshtaWaybills $npWaybills;
+    private CarrierNumbers $carriers;
 
-    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules, ?NovaPoshtaWaybills $npWaybills = null)
+    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules, ?CarrierNumbers $carriers = null)
     {
         $this->ordersEntity = $entityFactory->get(OrdersEntity::class);
         $this->purchasesEntity = $entityFactory->get(PurchasesEntity::class);
@@ -42,7 +46,11 @@ class BackendOrdersExportHelper
         $this->settings = $settings;
         $this->entityFactory = $entityFactory;
         $this->modules = $modules;
-        $this->npWaybills = $npWaybills ?? new NovaPoshtaWaybills($modules, $entityFactory);
+        $this->carriers = $carriers ?? new AllCarrierNumbers(
+            new NovaPoshtaWaybills($modules, $entityFactory),
+            new UkrposhtaBarcodes($modules),
+            new DeliveryCarriers($entityFactory),
+        );
     }
 
     /** Повертає назви колонок для експорту. */
@@ -73,7 +81,7 @@ class BackendOrdersExportHelper
 
         $exportTtn = $this->exportParam('export_ttn');
         if (($exportTtn == '1' || $exportTtn == '2' || $exportTtn === 1 || $exportTtn === 2)
-            && $this->npWaybills->available()
+            && $this->carriers->available()
         ) {
             $columnsNamesWithTtn = [];
             foreach ($columnsNames as $key => $value) {
@@ -152,7 +160,7 @@ class BackendOrdersExportHelper
 
         $exportTtn = $this->exportParam('export_ttn');
         if (($exportTtn == '2' || $exportTtn === 2)
-            && $this->npWaybills->available()
+            && $this->carriers->available()
         ) {
             $filter['has_ttn'] = true;
         }
@@ -267,7 +275,7 @@ class BackendOrdersExportHelper
         return ExtenderFacade::execute(__METHOD__, $statuses, func_get_args());
     }
 
-    /** Повертає ТТН для замовлень — з модуля Sviat/NovaPoshta чи старого NovaPoshtaTracking. */
+    /** Повертає номери відправлень для замовлень: накладні Нової Пошти чи штрихкоди Укрпошти. */
     public function attachTtn($orders)
     {
         $ordersIds = [];
@@ -275,7 +283,7 @@ class BackendOrdersExportHelper
             $ordersIds[] = (int)$order->id;
         }
 
-        $ttnData = $this->npWaybills->numbers($ordersIds);
+        $ttnData = $this->carriers->numbers($ordersIds);
 
         return ExtenderFacade::execute(__METHOD__, $ttnData, func_get_args());
     }
