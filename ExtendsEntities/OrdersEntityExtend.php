@@ -6,7 +6,7 @@ namespace Okay\Modules\Sviat\OrdersExport\ExtendsEntities;
 use Okay\Core\Modules\AbstractModuleEntityFilter;
 use Okay\Core\ServiceLocator;
 use Okay\Entities\OrdersEntity as OriginalOrdersEntity;
-use Okay\Modules\Sviat\OrdersExport\Helpers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
 
 /** Додаткові фільтри для експорту замовлень. */
 class OrdersEntityExtend extends AbstractModuleEntityFilter
@@ -19,12 +19,12 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
      */
     protected function ttnOrdersSql(): ?string
     {
-        return ServiceLocator::getInstance()->getService(NovaPoshtaWaybills::class)->ordersWithWaybillSql();
+        return ServiceLocator::getInstance()->getService(CarrierNumbers::class)->ordersWithNumberSql();
     }
 
     /**
-     * Фільтр замовлень, у яких є ТТН — у модулі Sviat/NovaPoshta чи старому NovaPoshtaTracking.
-     * Підзапит, а не JOIN: з двома модулями JOIN повторював би замовлення з накладною в обох.
+     * Фільтр замовлень, у яких є ТТН Нової Пошти чи штрихкод Укрпошти.
+     * Підзапит, а не JOIN: з кількома модулями JOIN повторював би замовлення з номером в обох.
      */
     public function filter__has_ttn($value, $filter)
     {
@@ -35,7 +35,7 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
         $tableAlias = OriginalOrdersEntity::getTableAlias();
         $sql = $this->ttnOrdersSql();
 
-        // Модулі Нової Пошти необов'язкові. Без них ТТН немає ні в кого, тож
+        // Модулі перевізників необов'язкові. Без них ТТН немає ні в кого, тож
         // порожній результат — правильна відповідь: пропустити фільтр означало б
         // віддати в експорт усі замовлення підряд.
         if ($sql === null) {

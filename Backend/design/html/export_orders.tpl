@@ -87,7 +87,7 @@
                             </div>
                         </div>
                         {/if}
-                        {if $is_nova_poshta_tracking_active}
+                        {if $is_carrier_available}
                         <div class="col-md-3 col-sm-3 col-lg-3 col-sm-12 mb-h">
                             <div class="option_export_wrap">
                                 <div class="heading_label">{$btr->sviat__orders_export__export_ttn|escape}</div>

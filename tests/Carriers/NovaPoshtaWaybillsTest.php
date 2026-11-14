@@ -1,20 +1,20 @@
 <?php
 
-namespace Modules\Sviat\OrdersExport;
+namespace Modules\Sviat\OrdersExport\Carriers;
 
 use Okay\Core\EntityFactory;
 use Okay\Core\Modules\Modules;
 use Okay\Modules\Sviat\NovaPoshta\Integration\NpOrders;
 use Okay\Modules\Sviat\NovaPoshtaTracking\Entities\NovaPoshtaTrackingEntity;
-use Okay\Modules\Sviat\OrdersExport\Helpers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
 use PHPUnit\Framework\TestCase;
 
 // Сусідні модулі необов'язкові: без них класів немає, а перевірки доступності питають саме про клас.
 if (!class_exists(NpOrders::class)) {
-    require_once __DIR__ . '/NpOrdersStub.php';
+    require_once __DIR__ . '/../NpOrdersStub.php';
 }
 if (!class_exists(NovaPoshtaTrackingEntity::class)) {
-    require_once __DIR__ . '/NovaPoshtaTrackingEntityStub.php';
+    require_once __DIR__ . '/../NovaPoshtaTrackingEntityStub.php';
 }
 
 /** Номери накладних для експорту — з модуля Sviat/NovaPoshta і старого NovaPoshtaTracking. */
@@ -83,19 +83,19 @@ class NovaPoshtaWaybillsTest extends TestCase
 
         self::assertFalse($source->available());
         self::assertSame([], $source->numbers([1, 2]));
-        self::assertNull($source->ordersWithWaybillSql());
+        self::assertNull($source->ordersWithNumberSql());
     }
 
     public function testSubqueryForNewModule(): void
     {
-        $sql = $this->source(true, false)->ordersWithWaybillSql();
+        $sql = $this->source(true, false)->ordersWithNumberSql();
 
         self::assertSame("SELECT order_id FROM " . NpOrders::waybillTable() . " WHERE number <> ''", $sql);
     }
 
     public function testSubqueryForBothIsAUnion(): void
     {
-        $sql = $this->source(true, true)->ordersWithWaybillSql();
+        $sql = $this->source(true, true)->ordersWithNumberSql();
 
         self::assertStringContainsString(NpOrders::waybillTable(), $sql);
         self::assertStringContainsString(' UNION ', $sql);
