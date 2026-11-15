@@ -8,6 +8,7 @@ use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
 use Okay\Modules\Sviat\OrdersExport\Carriers\DeliveryCarriers;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
 use Okay\Modules\Sviat\OrdersExport\Carriers\UkrposhtaBarcodes;
+use Okay\Modules\Sviat\OrdersExport\Export\FormulaSafeCsv;
 use Okay\Core\EntityFactory;
 use Okay\Core\Modules\Extender\ExtenderFacade;
 use Okay\Core\Modules\Modules;
@@ -169,7 +170,7 @@ class BackendOrdersExportHelper
         $filter = $this->appendBrandOrdersFilter($filter, $brandIds);
 
         if ($page == 1) {
-            fputcsv($f, $columnsNames, $columnDelimiter, '"', '');
+            FormulaSafeCsv::putRow($f, $columnsNames, $columnDelimiter);
         }
 
         fclose($f);
@@ -373,7 +374,7 @@ class BackendOrdersExportHelper
                 foreach ($columnsNames as $key => $columnName) {
                     switch ($key) {
                         case 'order_id':
-                            $row[] = $order->id;
+                            $row[] = FormulaSafeCsv::number($order->id);
                             break;
                         case 'multiple_items':
                             $row[] = '';
@@ -409,7 +410,7 @@ class BackendOrdersExportHelper
                             $row[] = $order->$key ?? '';
                     }
                 }
-                fputcsv($f, $row, $columnDelimiter, '"', '');
+                FormulaSafeCsv::putRow($f, $row, $columnDelimiter);
             } else {
                 foreach ($orderPurchases as $purchase) {
                     $productName = $purchase->product_name;
@@ -426,10 +427,10 @@ class BackendOrdersExportHelper
                     foreach ($columnsNames as $key => $columnName) {
                         switch ($key) {
                             case 'order_id':
-                                $row[] = $order->id;
+                                $row[] = FormulaSafeCsv::number($order->id);
                                 break;
                             case 'multiple_items':
-                                $row[] = $multipleItemsValue;
+                                $row[] = FormulaSafeCsv::number($multipleItemsValue);
                                 break;
                             case 'status':
                                 $row[] = $orderStatusName;
@@ -447,10 +448,10 @@ class BackendOrdersExportHelper
                                 $row[] = $productName;
                                 break;
                             case 'quantity':
-                                $row[] = $purchase->amount ?? '';
+                                $row[] = FormulaSafeCsv::number($purchase->amount ?? '');
                                 break;
                             case 'price':
-                                $row[] = $purchase->price ?? '';
+                                $row[] = FormulaSafeCsv::number($purchase->price ?? '');
                                 break;
                             case 'brand':
                                 $row[] = $brandName;
@@ -462,7 +463,7 @@ class BackendOrdersExportHelper
                                 $row[] = $order->$key ?? '';
                         }
                     }
-                    fputcsv($f, $row, $columnDelimiter, '"', '');
+                    FormulaSafeCsv::putRow($f, $row, $columnDelimiter);
                 }
             }
         }
