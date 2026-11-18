@@ -26,6 +26,11 @@ final class NovaPoshtaWaybills implements CarrierNumbers
         $this->npOrders = $npOrders ?? static fn(): object => ServiceLocator::getInstance()->getService(NpOrders::class);
     }
 
+    public function carrier(): string
+    {
+        return DeliveryCarriers::NOVA_POSHTA;
+    }
+
     public function available(): bool
     {
         return $this->newActive() || $this->oldActive();

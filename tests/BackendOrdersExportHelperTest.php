@@ -92,6 +92,16 @@ class BackendOrdersExportHelperTest extends TestCase
         );
     }
 
+    public function testFallbackConstructorIncludesMeest(): void
+    {
+        $helper = $this->buildHelper([]);
+
+        $source = (new \ReflectionProperty($helper, 'carriers'))->getValue($helper);
+        $adapters = (new \ReflectionProperty($source, 'byCarrier'))->getValue($source);
+
+        $this->assertSame(['novaposhta', 'ukrposhta', 'meest'], array_keys($adapters));
+    }
+
     public function testAttachTtnIsEmptyWhenNovaPoshtaTrackingDisabled(): void
     {
         $orders = $this->buildOrders(5);

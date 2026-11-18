@@ -18,6 +18,11 @@ final class UkrposhtaBarcodes implements CarrierNumbers
         $this->upOrders = $upOrders ?? static fn(): object => ServiceLocator::getInstance()->getService(UpOrders::class);
     }
 
+    public function carrier(): string
+    {
+        return DeliveryCarriers::UKRPOSHTA;
+    }
+
     public function available(): bool
     {
         return class_exists(UpOrders::class) && $this->modules->isActiveModule('Sviat', 'Ukrposhta');

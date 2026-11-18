@@ -31,6 +31,9 @@
                     {if $smarty.get.keyword}
                         <input type="hidden" name="keyword" value="{$smarty.get.keyword|escape}">
                     {/if}
+                    {if $smarty.get.delivery_status}
+                        <input type="hidden" name="delivery_status" value="{$smarty.get.delivery_status|escape}">
+                    {/if}
                     {if $smarty.get.np_status}
                         <input type="hidden" name="np_status" value="{$smarty.get.np_status|escape}">
                     {/if}

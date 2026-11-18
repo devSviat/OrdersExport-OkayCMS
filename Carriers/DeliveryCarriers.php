@@ -7,9 +7,22 @@ use Okay\Entities\DeliveriesEntity;
 use Okay\Entities\ModulesEntity;
 use Okay\Entities\OrdersEntity;
 
-/** Визначає замовлення, поточна доставка яких прив'язана до модуля Sviat/Ukrposhta. */
+/** Визначає перевізника поточної доставки замовлення за модулем доставки. */
 final class DeliveryCarriers
 {
+    public const string NOVA_POSHTA = 'novaposhta';
+    public const string UKRPOSHTA = 'ukrposhta';
+    public const string MEEST = 'meest';
+
+    /** Модулі доставки за «Vendor/Module»; старі модулі НП підтримуються, поки вони є на сайті. */
+    private const array MODULES = [
+        'Sviat/NovaPoshta' => self::NOVA_POSHTA,
+        'Sviat/NovaPoshtaTracking' => self::NOVA_POSHTA,
+        'OkayCMS/NovaposhtaCost' => self::NOVA_POSHTA,
+        'Sviat/Ukrposhta' => self::UKRPOSHTA,
+        'Sviat/Meest' => self::MEEST,
+    ];
+
     public function __construct(private readonly EntityFactory $entityFactory)
     {
     }
@@ -18,9 +31,9 @@ final class DeliveryCarriers
      * Три пакетні запити на будь-яку кількість замовлень.
      *
      * @param list<int> $orderIds
-     * @return list<int> id замовлень із доставкою Укрпошти
+     * @return array<int, string> ключ перевізника за id замовлення; доставки без модуля перевізника немає
      */
-    public function ukrposhtaOrders(array $orderIds): array
+    public function ofOrders(array $orderIds): array
     {
         if ($orderIds === []) {
             return [];
@@ -41,17 +54,19 @@ final class DeliveryCarriers
         if ($moduleIds === []) {
             return [];
         }
-        $ukrposhtaModules = [];
+        $carrierOfModule = [];
         foreach ($this->entityFactory->get(ModulesEntity::class)->find(['id' => $moduleIds, 'limit' => count($moduleIds)]) as $module) {
-            if ($module->vendor === 'Sviat' && $module->module_name === 'Ukrposhta') {
-                $ukrposhtaModules[(int)$module->id] = true;
+            $carrier = self::MODULES[$module->vendor . '/' . $module->module_name] ?? null;
+            if ($carrier !== null) {
+                $carrierOfModule[(int)$module->id] = $carrier;
             }
         }
 
         $result = [];
         foreach ($deliveryOf as $orderId => $deliveryId) {
-            if (isset($ukrposhtaModules[$moduleOf[$deliveryId] ?? 0])) {
-                $result[] = $orderId;
+            $carrier = $carrierOfModule[$moduleOf[$deliveryId] ?? 0] ?? null;
+            if ($carrier !== null) {
+                $result[$orderId] = $carrier;
             }
         }
 

@@ -20,12 +20,18 @@ class AllCarrierNumbersTest extends TestCase
     private const int NP_DELIVERY = 1;
     private const int UP_DELIVERY = 2;
     private const int PICKUP = 3;
+    private const int MEEST_DELIVERY = 4;
 
-    private static function carrier(bool $available, array $numbers, ?string $sql): CarrierNumbers
+    private static function carrier(string $key, bool $available, array $numbers, ?string $sql): CarrierNumbers
     {
-        return new class ($available, $numbers, $sql) implements CarrierNumbers {
-            public function __construct(private bool $available, private array $numbers, private ?string $sql)
+        return new class ($key, $available, $numbers, $sql) implements CarrierNumbers {
+            public function __construct(private string $key, private bool $available, private array $numbers, private ?string $sql)
             {
+            }
+
+            public function carrier(): string
+            {
+                return $this->key;
             }
 
             public function available(): bool
@@ -62,11 +68,13 @@ class AllCarrierNumbersTest extends TestCase
             (object)['id' => self::NP_DELIVERY, 'module_id' => 11],
             (object)['id' => self::UP_DELIVERY, 'module_id' => 12],
             (object)['id' => self::PICKUP, 'module_id' => 0],
+            (object)['id' => self::MEEST_DELIVERY, 'module_id' => 13],
         ]);
         $modules = $this->createStub(ModulesEntity::class);
         $modules->method('find')->willReturn([
             (object)['id' => 11, 'vendor' => 'Sviat', 'module_name' => 'NovaPoshta'],
             (object)['id' => 12, 'vendor' => 'Sviat', 'module_name' => 'Ukrposhta'],
+            (object)['id' => 13, 'vendor' => 'Sviat', 'module_name' => 'Meest'],
         ]);
         $factory = $this->createStub(EntityFactory::class);
         $factory->method('get')->willReturnCallback(static fn(string $class) => match ($class) {
@@ -81,10 +89,99 @@ class AllCarrierNumbersTest extends TestCase
     private function all(array $np, array $up, array $deliveryOf = [], int &$lookups = 0, bool $upAvailable = true, ?string $npSql = 'NP_SQL', ?string $upSql = 'UP_SQL'): AllCarrierNumbers
     {
         return new AllCarrierNumbers(
-            self::carrier($np !== [] || $npSql !== null, $np, $npSql),
-            self::carrier($upAvailable, $up, $upSql),
             $this->deliveryCarriers($deliveryOf, $lookups),
+            self::carrier('novaposhta', $np !== [] || $npSql !== null, $np, $npSql),
+            self::carrier('ukrposhta', $upAvailable, $up, $upSql),
         );
+    }
+
+    private function withMeest(array $deliveryOf, CarrierNumbers ...$carriers): AllCarrierNumbers
+    {
+        return new AllCarrierNumbers($this->deliveryCarriers($deliveryOf), ...$carriers);
+    }
+
+    public function testMeestWinsWhenDeliveryIsMeest(): void
+    {
+        $all = $this->withMeest(
+            [1 => self::MEEST_DELIVERY],
+            self::carrier('novaposhta', true, [1 => 'NP1'], 'NP_SQL'),
+            self::carrier('meest', true, [1 => 'MS-1'], 'MS_SQL'),
+        );
+
+        self::assertSame([1 => 'MS-1'], $all->numbers([1]));
+    }
+
+    public function testMeestIgnoredWhenDeliveryIsNotMeest(): void
+    {
+        $np = $this->withMeest(
+            [1 => self::NP_DELIVERY],
+            self::carrier('novaposhta', true, [1 => 'NP1'], 'NP_SQL'),
+            self::carrier('meest', true, [1 => 'MS-1'], 'MS_SQL'),
+        );
+        $up = $this->withMeest(
+            [1 => self::UP_DELIVERY],
+            self::carrier('meest', true, [1 => 'MS-1'], 'MS_SQL'),
+            self::carrier('ukrposhta', true, [1 => 'UP1'], 'UP_SQL'),
+        );
+
+        self::assertSame([1 => 'NP1'], $np->numbers([1]));
+        self::assertSame([1 => 'UP1'], $up->numbers([1]));
+    }
+
+    public function testNoCarrierDeliveryFallsBackToNp(): void
+    {
+        $all = $this->withMeest(
+            [1 => self::PICKUP],
+            self::carrier('meest', true, [1 => 'MS-1'], 'MS_SQL'),
+            self::carrier('novaposhta', true, [1 => 'NP1'], 'NP_SQL'),
+        );
+
+        self::assertSame([1 => 'NP1'], $all->numbers([1]));
+    }
+
+    public function testNoCarrierDeliveryWithoutNpFirstKeyAlphabeticallyWins(): void
+    {
+        $all = $this->withMeest(
+            [1 => self::PICKUP],
+            self::carrier('ukrposhta', true, [1 => 'UP1'], 'UP_SQL'),
+            self::carrier('meest', true, [1 => 'MS-1'], 'MS_SQL'),
+        );
+
+        self::assertSame([1 => 'MS-1'], $all->numbers([1]), 'meest < ukrposhta alphabetically; no carrier delivery and no NP');
+    }
+
+    public function testMeestAloneIsTaken(): void
+    {
+        $all = $this->withMeest(
+            [],
+            self::carrier('novaposhta', true, [], 'NP_SQL'),
+            self::carrier('meest', true, [2 => 'MS-2'], 'MS_SQL'),
+        );
+
+        self::assertSame([2 => 'MS-2'], $all->numbers([1, 2]));
+    }
+
+    public function testMeestDisabledNoUnion(): void
+    {
+        $all = $this->withMeest(
+            [],
+            self::carrier('novaposhta', true, [], 'NP_SQL'),
+            self::carrier('ukrposhta', true, [], 'UP_SQL'),
+            self::carrier('meest', false, [], null),
+        );
+
+        self::assertSame('NP_SQL UNION UP_SQL', $all->ordersWithNumberSql());
+    }
+
+    public function testMeestEnabledJoinsUnion(): void
+    {
+        $all = $this->withMeest(
+            [],
+            self::carrier('novaposhta', true, [], 'NP_SQL'),
+            self::carrier('meest', true, [], 'MS_SQL'),
+        );
+
+        self::assertSame('NP_SQL UNION MS_SQL', $all->ordersWithNumberSql());
     }
 
     public function testBothCarriersCurrentUkrposhtaDeliveryGivesBarcode(): void
@@ -93,6 +190,27 @@ class AllCarrierNumbersTest extends TestCase
 
         self::assertEqualsCanonicalizing([1 => 'UP1', 2 => 'NP2', 3 => 'UP3'], $all->numbers([1, 2, 3]));
         self::assertSame('UP1', $all->numbers([1, 2, 3])[1]);
+    }
+
+    public function testAdapterOrderDoesNotMatter(): void
+    {
+        $deliveryOf = [1 => self::UP_DELIVERY, 2 => self::NP_DELIVERY, 3 => self::PICKUP];
+        $np = [1 => 'NP1', 2 => 'NP2', 3 => 'NP3', 4 => 'NP4'];
+        $up = [1 => 'UP1', 2 => 'UP2', 3 => 'UP3', 5 => 'UP5'];
+        $direct = new AllCarrierNumbers(
+            $this->deliveryCarriers($deliveryOf),
+            self::carrier('novaposhta', true, $np, 'NP_SQL'),
+            self::carrier('ukrposhta', true, $up, 'UP_SQL'),
+        );
+        $reversed = new AllCarrierNumbers(
+            $this->deliveryCarriers($deliveryOf),
+            self::carrier('ukrposhta', true, $up, 'UP_SQL'),
+            self::carrier('novaposhta', true, $np, 'NP_SQL'),
+        );
+
+        self::assertEqualsCanonicalizing([1 => 'UP1', 2 => 'NP2', 3 => 'NP3', 4 => 'NP4', 5 => 'UP5'], $direct->numbers([1, 2, 3, 4, 5]));
+        self::assertEqualsCanonicalizing($direct->numbers([1, 2, 3, 4, 5]), $reversed->numbers([1, 2, 3, 4, 5]));
+        self::assertSame('UP1', $reversed->numbers([1, 2, 3, 4, 5])[1]);
     }
 
     public function testBothCarriersCurrentNovaPoshtaDeliveryGivesWaybill(): void

@@ -4,9 +4,10 @@
 namespace Okay\Modules\Sviat\OrdersExport\Backend\Helpers;
 
 use Okay\Modules\Sviat\OrdersExport\Carriers\AllCarrierNumbers;
-use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
 use Okay\Modules\Sviat\OrdersExport\Carriers\DeliveryCarriers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\MeestBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\NumberSource;
 use Okay\Modules\Sviat\OrdersExport\Carriers\UkrposhtaBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Export\FormulaSafeCsv;
 use Okay\Core\EntityFactory;
@@ -34,9 +35,9 @@ class BackendOrdersExportHelper
     private EntityFactory $entityFactory;
     private Modules $modules;
 
-    private CarrierNumbers $carriers;
+    private NumberSource $carriers;
 
-    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules, ?CarrierNumbers $carriers = null)
+    public function __construct(EntityFactory $entityFactory, Request $request, Settings $settings, Modules $modules, ?NumberSource $carriers = null)
     {
         $this->ordersEntity = $entityFactory->get(OrdersEntity::class);
         $this->purchasesEntity = $entityFactory->get(PurchasesEntity::class);
@@ -48,9 +49,10 @@ class BackendOrdersExportHelper
         $this->entityFactory = $entityFactory;
         $this->modules = $modules;
         $this->carriers = $carriers ?? new AllCarrierNumbers(
+            new DeliveryCarriers($entityFactory),
             new NovaPoshtaWaybills($modules, $entityFactory),
             new UkrposhtaBarcodes($modules),
-            new DeliveryCarriers($entityFactory),
+            new MeestBarcodes($modules),
         );
     }
 
