@@ -10,9 +10,10 @@ use Okay\Core\Request;
 use Okay\Core\Settings;
 use Okay\Modules\Sviat\OrdersExport\Backend\Helpers\BackendOrdersExportHelper;
 use Okay\Modules\Sviat\OrdersExport\Carriers\AllCarrierNumbers;
-use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
 use Okay\Modules\Sviat\OrdersExport\Carriers\DeliveryCarriers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\MeestBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
+use Okay\Modules\Sviat\OrdersExport\Carriers\NumberSource;
 use Okay\Modules\Sviat\OrdersExport\Carriers\UkrposhtaBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Extenders\BackendExtender;
 use Okay\Modules\Sviat\OrdersExport\Security\AdminIdentity;
@@ -35,18 +36,25 @@ return [
             new SR(Modules::class),
         ],
     ],
+    MeestBarcodes::class => [
+        'class' => MeestBarcodes::class,
+        'arguments' => [
+            new SR(Modules::class),
+        ],
+    ],
     DeliveryCarriers::class => [
         'class' => DeliveryCarriers::class,
         'arguments' => [
             new SR(EntityFactory::class),
         ],
     ],
-    CarrierNumbers::class => [
+    NumberSource::class => [
         'class' => AllCarrierNumbers::class,
         'arguments' => [
+            new SR(DeliveryCarriers::class),
             new SR(NovaPoshtaWaybills::class),
             new SR(UkrposhtaBarcodes::class),
-            new SR(DeliveryCarriers::class),
+            new SR(MeestBarcodes::class),
         ],
     ],
     BackendOrdersExportHelper::class => [
@@ -56,7 +64,7 @@ return [
             new SR(Request::class),
             new SR(Settings::class),
             new SR(Modules::class),
-            new SR(CarrierNumbers::class),
+            new SR(NumberSource::class),
         ],
     ],
     BackendExtender::class => [

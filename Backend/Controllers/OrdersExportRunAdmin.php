@@ -4,7 +4,7 @@
 namespace Okay\Modules\Sviat\OrdersExport\Backend\Controllers;
 
 use Okay\Admin\Controllers\IndexAdmin;
-use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\NumberSource;
 use Okay\Entities\BrandsEntity;
 use Okay\Entities\OrderStatusEntity;
 
@@ -17,7 +17,7 @@ class OrdersExportRunAdmin extends IndexAdmin
     public function fetch(
         OrderStatusEntity $orderStatusEntity,
         BrandsEntity $brandsEntity,
-        CarrierNumbers $carriers
+        NumberSource $carriers
     ) {
         $defaultExportTtn = (string) $this->settings->get('sviat__orders_export__default_export_ttn');
         if (!in_array($defaultExportTtn, ['0', '1', '2'], true)) {

@@ -6,7 +6,7 @@ namespace Okay\Modules\Sviat\OrdersExport\ExtendsEntities;
 use Okay\Core\Modules\AbstractModuleEntityFilter;
 use Okay\Core\ServiceLocator;
 use Okay\Entities\OrdersEntity as OriginalOrdersEntity;
-use Okay\Modules\Sviat\OrdersExport\Carriers\CarrierNumbers;
+use Okay\Modules\Sviat\OrdersExport\Carriers\NumberSource;
 
 /** Додаткові фільтри для експорту замовлень. */
 class OrdersEntityExtend extends AbstractModuleEntityFilter
@@ -19,11 +19,11 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
      */
     protected function ttnOrdersSql(): ?string
     {
-        return ServiceLocator::getInstance()->getService(CarrierNumbers::class)->ordersWithNumberSql();
+        return ServiceLocator::getInstance()->getService(NumberSource::class)->ordersWithNumberSql();
     }
 
     /**
-     * Фільтр замовлень, у яких є ТТН Нової Пошти чи штрихкод Укрпошти.
+     * Фільтр замовлень, у яких є ТТН Нової Пошти, штрихкод Укрпошти чи посилки Meest.
      * Підзапит, а не JOIN: з кількома модулями JOIN повторював би замовлення з номером в обох.
      */
     public function filter__has_ttn($value, $filter)
