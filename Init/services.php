@@ -14,6 +14,7 @@ use Okay\Modules\Sviat\OrdersExport\Carriers\DeliveryCarriers;
 use Okay\Modules\Sviat\OrdersExport\Carriers\MeestBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NumberSource;
+use Okay\Modules\Sviat\OrdersExport\Carriers\RozetkaTracks;
 use Okay\Modules\Sviat\OrdersExport\Carriers\UkrposhtaBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Extenders\BackendExtender;
 use Okay\Modules\Sviat\OrdersExport\Security\AdminIdentity;
@@ -42,6 +43,12 @@ return [
             new SR(Modules::class),
         ],
     ],
+    RozetkaTracks::class => [
+        'class' => RozetkaTracks::class,
+        'arguments' => [
+            new SR(Modules::class),
+        ],
+    ],
     DeliveryCarriers::class => [
         'class' => DeliveryCarriers::class,
         'arguments' => [
@@ -55,6 +62,7 @@ return [
             new SR(NovaPoshtaWaybills::class),
             new SR(UkrposhtaBarcodes::class),
             new SR(MeestBarcodes::class),
+            new SR(RozetkaTracks::class),
         ],
     ],
     BackendOrdersExportHelper::class => [

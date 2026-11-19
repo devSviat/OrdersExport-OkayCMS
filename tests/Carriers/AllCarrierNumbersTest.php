@@ -21,6 +21,7 @@ class AllCarrierNumbersTest extends TestCase
     private const int UP_DELIVERY = 2;
     private const int PICKUP = 3;
     private const int MEEST_DELIVERY = 4;
+    private const int ROZETKA_DELIVERY = 5;
 
     private static function carrier(string $key, bool $available, array $numbers, ?string $sql): CarrierNumbers
     {
@@ -69,12 +70,14 @@ class AllCarrierNumbersTest extends TestCase
             (object)['id' => self::UP_DELIVERY, 'module_id' => 12],
             (object)['id' => self::PICKUP, 'module_id' => 0],
             (object)['id' => self::MEEST_DELIVERY, 'module_id' => 13],
+            (object)['id' => self::ROZETKA_DELIVERY, 'module_id' => 14],
         ]);
         $modules = $this->createStub(ModulesEntity::class);
         $modules->method('find')->willReturn([
             (object)['id' => 11, 'vendor' => 'Sviat', 'module_name' => 'NovaPoshta'],
             (object)['id' => 12, 'vendor' => 'Sviat', 'module_name' => 'Ukrposhta'],
             (object)['id' => 13, 'vendor' => 'Sviat', 'module_name' => 'Meest'],
+            (object)['id' => 14, 'vendor' => 'Sviat', 'module_name' => 'RozetkaDelivery'],
         ]);
         $factory = $this->createStub(EntityFactory::class);
         $factory->method('get')->willReturnCallback(static fn(string $class) => match ($class) {
@@ -98,6 +101,34 @@ class AllCarrierNumbersTest extends TestCase
     private function withMeest(array $deliveryOf, CarrierNumbers ...$carriers): AllCarrierNumbers
     {
         return new AllCarrierNumbers($this->deliveryCarriers($deliveryOf), ...$carriers);
+    }
+
+    /** Покупець обрав ROZETKA після того, як менеджер уже створив номер іншого перевізника. */
+    public function testRozetkaWinsWhenDeliveryIsRozetka(): void
+    {
+        $all = $this->withMeest(
+            [1 => self::ROZETKA_DELIVERY, 2 => self::ROZETKA_DELIVERY],
+            self::carrier('novaposhta', true, [1 => 'NP1'], 'NP_SQL'),
+            self::carrier('meest', true, [2 => 'MS-2'], 'MS_SQL'),
+            self::carrier('rozetka', true, [1 => '101000000001', 2 => '101000000002'], 'RZ_SQL'),
+        );
+
+        self::assertSame([1 => '101000000001', 2 => '101000000002'], $all->numbers([1, 2]));
+        self::assertSame('NP_SQL UNION MS_SQL UNION RZ_SQL', $all->ordersWithNumberSql());
+    }
+
+    /** Покинута ЕН ROZETKA після зміни доставки не заміняє номер поточного перевізника. */
+    public function testAbandonedRozetkaLosesToCurrentDelivery(): void
+    {
+        $all = $this->withMeest(
+            [1 => self::NP_DELIVERY, 2 => self::UP_DELIVERY, 3 => self::MEEST_DELIVERY],
+            self::carrier('rozetka', true, [1 => 'RZ1', 2 => 'RZ2', 3 => 'RZ3', 4 => 'RZ4'], 'RZ_SQL'),
+            self::carrier('novaposhta', true, [1 => 'NP1'], 'NP_SQL'),
+            self::carrier('ukrposhta', true, [2 => 'UP2'], 'UP_SQL'),
+            self::carrier('meest', true, [3 => 'MS-3'], 'MS_SQL'),
+        );
+
+        self::assertSame([1 => 'NP1', 2 => 'UP2', 3 => 'MS-3', 4 => 'RZ4'], $all->numbers([1, 2, 3, 4]));
     }
 
     public function testMeestWinsWhenDeliveryIsMeest(): void

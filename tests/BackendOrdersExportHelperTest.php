@@ -92,14 +92,14 @@ class BackendOrdersExportHelperTest extends TestCase
         );
     }
 
-    public function testFallbackConstructorIncludesMeest(): void
+    public function testFallbackConstructorIncludesMeestAndRozetka(): void
     {
         $helper = $this->buildHelper([]);
 
         $source = (new \ReflectionProperty($helper, 'carriers'))->getValue($helper);
         $adapters = (new \ReflectionProperty($source, 'byCarrier'))->getValue($source);
 
-        $this->assertSame(['novaposhta', 'ukrposhta', 'meest'], array_keys($adapters));
+        $this->assertSame(['novaposhta', 'ukrposhta', 'meest', 'rozetka'], array_keys($adapters));
     }
 
     public function testAttachTtnIsEmptyWhenNovaPoshtaTrackingDisabled(): void

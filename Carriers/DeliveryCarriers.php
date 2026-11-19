@@ -13,6 +13,7 @@ final class DeliveryCarriers
     public const string NOVA_POSHTA = 'novaposhta';
     public const string UKRPOSHTA = 'ukrposhta';
     public const string MEEST = 'meest';
+    public const string ROZETKA = 'rozetka';
 
     /** Модулі доставки за «Vendor/Module»; старі модулі НП підтримуються, поки вони є на сайті. */
     private const array MODULES = [
@@ -21,6 +22,7 @@ final class DeliveryCarriers
         'OkayCMS/NovaposhtaCost' => self::NOVA_POSHTA,
         'Sviat/Ukrposhta' => self::UKRPOSHTA,
         'Sviat/Meest' => self::MEEST,
+        'Sviat/RozetkaDelivery' => self::ROZETKA,
     ];
 
     public function __construct(private readonly EntityFactory $entityFactory)
