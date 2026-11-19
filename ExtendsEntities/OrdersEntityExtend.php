@@ -23,7 +23,7 @@ class OrdersEntityExtend extends AbstractModuleEntityFilter
     }
 
     /**
-     * Фільтр замовлень, у яких є ТТН Нової Пошти, штрихкод Укрпошти чи посилки Meest.
+     * Фільтр замовлень, у яких є ТТН Нової Пошти, штрихкод Укрпошти, посилка Meest чи ЕН ROZETKA Delivery.
      * Підзапит, а не JOIN: з кількома модулями JOIN повторював би замовлення з номером в обох.
      */
     public function filter__has_ttn($value, $filter)

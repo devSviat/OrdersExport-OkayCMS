@@ -8,6 +8,7 @@ use Okay\Modules\Sviat\OrdersExport\Carriers\DeliveryCarriers;
 use Okay\Modules\Sviat\OrdersExport\Carriers\MeestBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NovaPoshtaWaybills;
 use Okay\Modules\Sviat\OrdersExport\Carriers\NumberSource;
+use Okay\Modules\Sviat\OrdersExport\Carriers\RozetkaTracks;
 use Okay\Modules\Sviat\OrdersExport\Carriers\UkrposhtaBarcodes;
 use Okay\Modules\Sviat\OrdersExport\Export\FormulaSafeCsv;
 use Okay\Core\EntityFactory;
@@ -53,6 +54,7 @@ class BackendOrdersExportHelper
             new NovaPoshtaWaybills($modules, $entityFactory),
             new UkrposhtaBarcodes($modules),
             new MeestBarcodes($modules),
+            new RozetkaTracks($modules),
         );
     }
 
